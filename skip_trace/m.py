@@ -86,8 +86,8 @@ def run_who_owns(args: argparse.Namespace) -> int:
         repo_urls = set()
         for record in evidence_records:
             if (
-                record.source == schemas.EvidenceSource.PYPI
-                and record.kind == schemas.EvidenceKind.ORGANIZATION
+                    record.source == schemas.EvidenceSource.PYPI
+                    and record.kind == schemas.EvidenceKind.ORGANIZATION
             ):
                 url = record.value.get("url")
                 if url and "github.com" in url:

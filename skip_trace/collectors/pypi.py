@@ -99,7 +99,7 @@ def cross_reference_by_user(package_name: str) -> List[EvidenceRecord]:
     new_evidence: List[EvidenceRecord] = []
     profile_url = _scrape_user_profile_url(package_name)
 
-    # --- NEW: Always create evidence for the PyPI user if found ---
+    # --- Always create evidence for the PyPI user if found ---
     if profile_url:
         try:
             username = profile_url.strip("/").rsplit("/", maxsplit=1)[-1]

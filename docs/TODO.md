@@ -25,10 +25,31 @@
 - twitter
 - xkcd - multiple repos with same user causes multiple evidences
 - bloom3 missing info from PKG-INFO  Home-page: http://www.iqianyue.com, Author Wei, etc
+  - BETTER! still missign `Author`
 - bloom - user has full name on pypi user page, doesn't display in markdown report
+  - Now always shows user in URL (should also show in owner section!)
+- `skip-trace --log-level INFO who-owns pelican`
+  - AUTHORS evidence full of html trash
+- `skip-trace --log-level INFO who-owns django`
+  - So many contributors and they're all listed with email addresses.
+
+
+## Anonymous packages
+- skip-trace who-owns roo00kie-utils
+- skip-trace who-owns a
+- skip-trace who-owns b
+
 
 ## Spacy 
 
 - plays poorly with tox
 - plays poorly with uv
 - small vs large model?
+
+## Sigstore/Attestations don't work
+
+- is it a windows compat problem? Seems to crash and report exit code 0 for everything
+- sigstore is only for looking at signatures with a github release (attaching artifacts to a git commit)?
+- pypi only deals in attestations?
+- attestation url only shows a few claims? e.g. the github repo identity?
+- How does pypi show "verified claims"? vs self asserted?

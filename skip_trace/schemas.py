@@ -2,9 +2,12 @@
 from __future__ import annotations
 
 import datetime
+import logging
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, List, Optional
+
+logger = logging.getLogger(__name__)
 
 # --- Enums for controlled vocabularies ---
 
@@ -44,6 +47,8 @@ class EvidenceSource(str, Enum):
     WHOIS = "whois"
     VENV_SCAN = "venv-scan"
     LLM_NER = "llm-ner"
+    URL = "url"  # For evidence from scanned homepages
+    PYPI_ATTESTATION = "pypi-attestation" # New source
 
 
 class EvidenceKind(str, Enum):
@@ -66,6 +71,12 @@ class EvidenceKind(str, Enum):
     # GitHub profile-specific evidence kinds
     USER_PROFILE = "user-profile"
     USER_COMPANY = "user-company"
+    URL_STATUS = "url-status"  # To track HTTP status of found URLs
+    # Sigstore-specific evidence kinds
+    SIGSTORE_SIGNER_IDENTITY = "sigstore-signer-identity"
+    SIGSTORE_BUILD_PROVENANCE = "sigstore-build-provenance"
+    # PyPI Attestation-specific evidence kind
+    PYPI_PUBLISHER_ATTESTATION = "pypi-publisher-attestation"
 
 
 # --- Core Data Schemas ---
@@ -93,6 +104,16 @@ class EvidenceRecord:
     linkage: List[str] = field(default_factory=list)
     confidence: float = 0.0
     notes: str = ""
+
+    def __post_init__(self) -> None:
+        """Logs every instantiation."""
+        logger.info(
+            "EvidenceRecord created: id=%s source=%s kind=%s notes=%r",
+            self.id,
+            self.source,
+            self.kind,
+            self.notes,
+        )
 
 
 @dataclass

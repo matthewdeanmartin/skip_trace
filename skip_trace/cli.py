@@ -6,7 +6,7 @@ from typing import List, Optional
 
 from rich_argparse import RichHelpFormatter
 
-from . import __version__
+from .__about__ import __version__
 from .main import run_command
 from .utils.cli_suggestions import SmartParser
 

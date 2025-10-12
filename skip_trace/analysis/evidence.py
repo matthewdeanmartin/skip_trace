@@ -94,7 +94,7 @@ def _parse_contact_string(contact_str: str) -> Dict[str, Optional[str]]:
     if not contact_str or not contact_str.strip():
         return {"name": None, "email": None}
 
-    # Pattern for "Name <email@domain.com>"
+    # Pattern for "Name <user@example.com>"
     match = re.search(r"(.+)<(.+)>", contact_str)
     if match:
         name = match.group(1).strip()

@@ -1,6 +1,7 @@
 # skip_trace/utils/http_client.py
 from __future__ import annotations
 
+import logging
 from typing import Optional
 
 import httpx
@@ -9,6 +10,7 @@ from ..config import CONFIG
 from ..exceptions import NetworkError
 
 _client: Optional[httpx.Client] = None
+logger = logging.getLogger(__name__)
 
 
 def get_client() -> httpx.Client:
@@ -32,6 +34,7 @@ def make_request(url: str) -> httpx.Response:
     :raises NetworkError: If the request fails due to network issues or an error status code.
     :return: The httpx.Response object.
     """
+    logger.info(f"Looking at {url}")
     client = get_client()
     try:
         response = client.get(url)
@@ -43,3 +46,18 @@ def make_request(url: str) -> httpx.Response:
         raise NetworkError(
             f"Request to {e.request.url} failed with status {e.response.status_code}"
         ) from e
+
+
+def make_request_safe(url: str) -> Optional[httpx.Response]:
+    """
+    Makes a GET request but returns the response even on HTTP error codes,
+    or None if a connection-level error occurs.
+    """
+    logger.info(f"Looking at {url}")
+    client = get_client()
+    try:
+        response = client.get(url)
+        return response
+    except httpx.RequestError as e:
+        logger.warning(f"Network request to {e.request.url} failed: {e}")
+        return None  # Indicate a connection-level error

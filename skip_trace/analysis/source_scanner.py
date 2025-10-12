@@ -64,7 +64,7 @@ JUNK_WORDS = {
     "BSD",
 }
 
-# --- NEW: Filename allowlist and more robust binary detection ---
+# --- Filename allowlist and more robust binary detection ---
 
 # A set of common extensionless text files that should never be treated as binary.
 TEXT_FILENAMES = {

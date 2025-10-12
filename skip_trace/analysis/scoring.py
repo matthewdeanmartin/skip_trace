@@ -4,6 +4,7 @@ from __future__ import annotations
 import collections
 import logging
 from typing import Dict, List, Optional, Tuple
+from urllib.parse import urlparse
 
 import tldextract
 
@@ -97,6 +98,18 @@ def _get_entity_from_record(record: EvidenceRecord) -> Tuple[Optional[str], Owne
             kind = OwnerKind.INDIVIDUAL
         else:
             kind = OwnerKind.PROJECT
+
+    # NEW: Handle PyPI Publisher Attestation
+    elif record.kind == EvidenceKind.PYPI_PUBLISHER_ATTESTATION:
+        repo_slug = record.value.get("repository")
+        if repo_slug and "/" in repo_slug:
+            name = repo_slug.split("/")[0]  # The user or org
+            kind = OwnerKind.PROJECT
+
+    # --- Handle EMAIL evidence directly ---
+    elif record.kind == EvidenceKind.EMAIL:
+        name = record.value.get("email")
+        kind = OwnerKind.INDIVIDUAL
     # Handle user profile and company evidence
     elif record.kind == EvidenceKind.USER_PROFILE:
         name = record.value.get("user_name")
@@ -123,7 +136,7 @@ def _get_entity_from_record(record: EvidenceRecord) -> Tuple[Optional[str], Owne
         if not raw_holder:
             return None, kind
 
-        # --- NEW: Sanitize the raw string before accepting it as a name ---
+        # --- Sanitize the raw string before accepting it as a name ---
         # 1. Reject if it's too long to be a name.
         if len(raw_holder) > 50:
             return None, kind
@@ -137,6 +150,38 @@ def _get_entity_from_record(record: EvidenceRecord) -> Tuple[Optional[str], Owne
             kind = OwnerKind.INDIVIDUAL
         else:
             kind = OwnerKind.COMPANY
+    elif record.kind == EvidenceKind.SIGSTORE_SIGNER_IDENTITY:
+        identity = record.value.get("identity", "")
+        if "@" in identity and "." in identity:  # Looks like an email
+            name = identity
+            kind = OwnerKind.INDIVIDUAL
+        else:
+            try:
+                # Try to parse a build identity URL
+                parsed = urlparse(identity)
+                if parsed.hostname and "github.com" in parsed.hostname:
+                    path_parts = [p for p in parsed.path.split("/") if p]
+                    if len(path_parts) >= 1:
+                        name = path_parts[0]  # The user or org
+                        kind = OwnerKind.PROJECT
+                else:
+                    name = identity
+                    kind = OwnerKind.PROJECT
+            except Exception:
+                name = identity
+                kind = OwnerKind.PROJECT
+    elif record.kind == EvidenceKind.SIGSTORE_BUILD_PROVENANCE:
+        repo_uri = record.value.get("repo_uri", "")
+        try:
+            # Parse git+https://github.com/org/repo.git
+            parsed = urlparse(repo_uri.split("@")[0].replace("git+", ""))
+            if parsed.hostname and "github.com" in parsed.hostname:
+                path_parts = [p for p in parsed.path.split("/") if p]
+                if len(path_parts) >= 1:
+                    name = path_parts[0]  # The user or org
+                    kind = OwnerKind.PROJECT
+        except Exception:
+            name = None
 
     return name, kind
 

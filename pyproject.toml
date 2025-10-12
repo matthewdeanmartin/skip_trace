@@ -3,13 +3,14 @@
 
 [project]
 name = "skip-trace"
-version = "0.1.0"
+version = "0.1.1"
 description = "Ownership Attribution for Python Packages"
 readme = "README.md"
+license = "MIT"
 authors = [
     { name = "Matthew Dean Martin", email = "matthewdeanmartin@gmail.com" },
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.13"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
@@ -17,6 +18,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Topic :: Security",
     "Topic :: Software Development :: Quality Assurance",
@@ -44,6 +46,11 @@ dependencies = [
     # "en_core_web_sm"
     "rich-argparse",
     "en-core-web-sm",
+    # "pypi_attestations"
+    "PyYAML>=6.0"
+]
+keywords = [
+  "PyPI maintainers", "package owners", "package provenance", "software supply chain", "PEP 541"
 ]
 
 
@@ -150,3 +157,8 @@ entity_resolution_llm = false # As requested, disabled by default
 "llm_ner_claim" = 0.20 # Max weight for an LLM-only claim
 "conflict" = -0.15
 
+
+[tool.jiggle_version]
+scheme = "pep440"
+default_increment = "patch"
+ignore = ["test", "sample_projects", "dead_code", ".packages"]

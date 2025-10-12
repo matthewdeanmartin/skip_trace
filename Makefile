@@ -41,7 +41,7 @@ test: clean uv.lock install_plugins
 
 .build_history/isort: .build_history $(FILES)
 	@echo "Formatting imports"
-	$(VENV) isort .
+	$(VENV) isort skip_trace
 	@touch .build_history/isort
 
 .PHONY: isort
