@@ -6,7 +6,6 @@ from typing import Optional
 
 from email_validator import EmailNotValidError, validate_email
 
-
 logger = logging.getLogger(__name__)
 
 RESERVED_DOMAINS = {

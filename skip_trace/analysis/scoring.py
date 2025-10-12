@@ -60,6 +60,7 @@ JUNK_WORDS = {
 
 logger = logging.getLogger(__name__)
 
+
 def _normalize_name(name: str) -> str:
     """Normalizes a name for entity grouping."""
     # Also parse out emails that might be part of the name

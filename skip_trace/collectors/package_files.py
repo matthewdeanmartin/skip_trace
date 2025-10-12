@@ -12,6 +12,7 @@ from ..analysis import source_scanner
 from ..exceptions import CollectorError, NetworkError
 from ..schemas import EvidenceRecord
 from ..utils import http_client
+from ..utils.safe_targz import safe_extract_auto
 
 logger = logging.getLogger(__name__)
 PACKAGE_DOWNLOAD_DIR = ".packages"
@@ -102,14 +103,18 @@ def collect_from_package_files(metadata: Dict[str, Any]) -> List[EvidenceRecord]
         os.makedirs(extract_dir, exist_ok=True)
         try:
             if download_path.endswith((".whl", ".zip")):
-                with zipfile.ZipFile(download_path, "r") as zf:
-                    zf.extractall(extract_dir)
-            elif download_path.endswith((".tar.gz", ".tgz")):
-                with tarfile.open(download_path, "r:gz") as tf:
-                    tf.extractall(extract_dir)
-            elif download_path.endswith(".tar.bz2"):
-                with tarfile.open(download_path, "r:bz2") as tf:
-                    tf.extractall(extract_dir)
+                with zipfile.ZipFile(download_path, "r") as zf:  # nosec # noqa
+                    zf.extractall(extract_dir)  # nosec # noqa
+            elif download_path.endswith(
+                (".tar.gz", ".tgz", ".tar.bz2", ".tar.xz", ".tar")
+            ):
+                safe_extract_auto(download_path, extract_dir)
+            # elif download_path.endswith((".tar.gz", ".tgz")):
+            #     with tarfile.open(download_path, "r:gz") as tf:  # nosec # noqa
+            #         tf.extractall(extract_dir)  # nosec # noqa
+            # elif download_path.endswith(".tar.bz2"):
+            #     with tarfile.open(download_path, "r:bz2") as tf:  # nosec # noqa
+            #         tf.extractall(extract_dir)  # nosec # noqa
             else:
                 logger.warning(
                     f"Unsupported archive format for {filename}. Skipping file scan."

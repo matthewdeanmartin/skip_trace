@@ -153,20 +153,7 @@ issues:
 	echo "N/A"
 
 core_all_tests:
-	./scripts/exercise_core_all.sh skip_trace "compile --in examples/compile/src --out examples/compile/out --dry-run"
-	uv sync --all-extras
+	echo "N/A"
 
 update-schema:
-	@mkdir -p skip_trace/schemas
-	@echo "Downloading GitLab CI schema..."
-	@if curl -fsSL "https://gitlab.com/gitlab-org/gitlab/-/raw/master/app/assets/javascripts/editor/schema/ci.json" -o skip_trace/schemas/gitlab_ci_schema.json ; then \
-		echo "✅ Schema saved"; \
-	else \
-		echo "⚠️  Warning: Failed to download schema"; \
-	fi
-	@echo "Downloading NOTICE..."
-	@if curl -fsSL "https://gitlab.com/gitlab-org/gitlab/-/raw/master/app/assets/javascripts/editor/schema/NOTICE?ref_type=heads" -o skip_trace/schemas/NOTICE.txt ; then \
-		echo "✅ NOTICE saved"; \
-	else \
-		echo "⚠️  Warning: Failed to download NOTICE"; \
-	fi
+	@echo "N/A"

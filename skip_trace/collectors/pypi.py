@@ -76,8 +76,8 @@ def _fetch_other_package_urls(user_profile_url: str) -> Set[str]:
 
         # Links to packages are in a 'package-snippet' class
         for link in soup.find_all("a", class_="package-snippet"):
-            if link.has_attr("href") and link["href"].startswith("/project/"): # type: ignore[union-attr]
-                packages.add(link["href"].split("/")[2]) # type: ignore[union-attr]
+            if link.has_attr("href") and link["href"].startswith("/project/"):  # type: ignore[union-attr]
+                packages.add(link["href"].split("/")[2])  # type: ignore[union-attr]
         logger.debug(f"Found {len(packages)} other packages by user.")
         return packages
     except NetworkError as e:
@@ -102,7 +102,7 @@ def cross_reference_by_user(package_name: str) -> List[EvidenceRecord]:
     # --- NEW: Always create evidence for the PyPI user if found ---
     if profile_url:
         try:
-            username = profile_url.strip('/').rsplit('/', maxsplit=1)[-1]
+            username = profile_url.strip("/").rsplit("/", maxsplit=1)[-1]
             value = {"name": username, "url": profile_url}
             record = EvidenceRecord(
                 id=generate_evidence_id(

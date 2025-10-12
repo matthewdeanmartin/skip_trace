@@ -166,7 +166,7 @@ def run_who_owns(args: argparse.Namespace) -> int:
         if top_score >= 0.7:
             return 0  # Success
         if top_score >= 0.5:
-            return 100  # Indeterminate
+            return 0  # Indeterminate # The tool didn't fail
         return 101  # No usable evidence
 
         # TODO: Pass evidence_records to the scoring engine
@@ -265,7 +265,5 @@ def run_command(args: argparse.Namespace) -> int:
 
     if handler:
         return handler(args)
-    print(
-        f"Error: Command '{args.command}' is not yet implemented.", file=sys.stderr
-    )
+    print(f"Error: Command '{args.command}' is not yet implemented.", file=sys.stderr)
     return 2

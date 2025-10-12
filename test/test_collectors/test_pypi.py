@@ -34,7 +34,9 @@ def test_fetch_package_metadata_missing_raises(require_pypi):
 
 
 def test_scrape_user_profile_url_found(require_pypi):
-    url = pypi_collector._scrape_user_profile_url(PKG)  # integration: call private is fine
+    url = pypi_collector._scrape_user_profile_url(
+        PKG
+    )  # integration: call private is fine
     # Not all projects expose a single maintainer prominently; accept None but prefer a URL.
     assert (url is None) or url.startswith("https://pypi.org/user/")
     # If present, it should end with a username path segment
@@ -64,7 +66,12 @@ def test_cross_reference_by_user_emits_user_evidence(require_pypi):
         user_records = [r for r in records if r.kind is EvidenceKind.PYPI_USER]
         r0: EvidenceRecord = user_records[0]
         assert r0.source.name == "PYPI"
-        assert isinstance(r0.locator, str) and r0.locator.startswith("https://pypi.org/user/")
+        assert isinstance(r0.locator, str) and r0.locator.startswith(
+            "https://pypi.org/user/"
+        )
         assert isinstance(r0.value, dict) and "name" in r0.value and "url" in r0.value
-        assert isinstance(r0.observed_at, datetime.datetime) and r0.observed_at.tzinfo is not None
+        assert (
+            isinstance(r0.observed_at, datetime.datetime)
+            and r0.observed_at.tzinfo is not None
+        )
         assert 0.0 <= r0.confidence <= 1.0

@@ -8,7 +8,6 @@ from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
 from github import Github, GithubException
-
 from github.NamedUser import NamedUser
 
 from ..analysis.evidence import generate_evidence_id
@@ -61,7 +60,7 @@ def _parse_repo_url(url: str) -> Optional[str]:
             if len(path.split("/")) >= 2:
                 return "/".join(path.split("/")[:2])
     except Exception:
-        pass
+        pass  # nosec # noqa
     logger.debug(f"Could not parse a valid GitHub repository from URL: {url}")
     return None
 
@@ -91,12 +90,12 @@ def _scrape_socials_from_html(html_url: str) -> Dict[str, str]:
             elif (
                 "mastodon.social" in href or "fosstodon.org" in href
             ) and "mastodon" not in contacts:
-                contacts["mastodon"] = href   # type: ignore[assignment]
+                contacts["mastodon"] = href  # type: ignore[assignment]
             elif "twitter.com" in href and "twitter" not in contacts:
                 # Prefer the twitter_username from API, but take this if needed
-                contacts["twitter"] = href   # type: ignore[assignment]
+                contacts["twitter"] = href  # type: ignore[assignment]
             elif "blog." in href or "medium.com" in href and "blog" not in contacts:
-                contacts["blog"] = href   # type: ignore[assignment]
+                contacts["blog"] = href  # type: ignore[assignment]
 
     except NetworkError as e:
         logger.warning(f"Could not scrape GitHub profile page {html_url}: {e}")
@@ -114,7 +113,7 @@ def _create_records_from_user_profile(user: NamedUser) -> List[EvidenceRecord]:
 
     # Evidence for company affiliation
     if user.company:
-        value:dict[str, str | None] = {"user_name": name, "company_name": user.company}
+        value: dict[str, str | None] = {"user_name": name, "company_name": user.company}
         records.append(
             EvidenceRecord(
                 id=generate_evidence_id(
@@ -161,7 +160,7 @@ def _create_records_from_user_profile(user: NamedUser) -> List[EvidenceRecord]:
                     EvidenceSource.REPO,
                     EvidenceKind.USER_PROFILE,
                     user.html_url,
-                    str(profile_info), # TODO: stringify this better?
+                    str(profile_info),  # TODO: stringify this better?
                     name,
                     hint="profile",
                 ),

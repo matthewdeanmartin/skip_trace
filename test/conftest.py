@@ -3,10 +3,11 @@ from __future__ import annotations
 
 import pytest
 
-from skip_trace.utils import http_client
 from skip_trace.exceptions import NetworkError
+from skip_trace.utils import http_client
 
 PYPI_PING_URL = "https://pypi.org/simple/"
+
 
 @pytest.fixture(scope="session")
 def require_pypi():

@@ -8,7 +8,6 @@ import re
 import string
 from typing import List
 
-
 from ..schemas import EvidenceKind, EvidenceRecord, EvidenceSource
 from ..utils.validation import is_valid_email
 from . import ner

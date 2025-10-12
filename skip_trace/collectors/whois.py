@@ -9,7 +9,6 @@ import whois as python_whois
 from whoisit import domain as rdap_domain
 
 from ..analysis.evidence import generate_evidence_id
-
 from ..schemas import EvidenceKind, EvidenceRecord, EvidenceSource
 from ..utils.cache import get_cached_data, set_cached_data
 
