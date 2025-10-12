@@ -1,16 +1,17 @@
 # skip_trace/collectors/pypi.py
+from __future__ import annotations
 
 import datetime
 import logging
-from typing import Any, Dict, Optional, Set, List
+from typing import Any, Dict, List, Optional, Set
 
 from bs4 import BeautifulSoup
 
+from ..analysis.evidence import extract_from_pypi as analyze_pypi_metadata
+from ..analysis.evidence import generate_evidence_id
 from ..exceptions import NetworkError, NoEvidenceError
 from ..schemas import EvidenceKind, EvidenceRecord, EvidenceSource
 from ..utils import http_client
-from ..analysis.evidence import extract_from_pypi as analyze_pypi_metadata
-from ..analysis.evidence import generate_evidence_id
 
 logger = logging.getLogger(__name__)
 PYPI_JSON_API_URL = "https://pypi.org/pypi"
@@ -44,6 +45,8 @@ def fetch_package_metadata(
                 f"{f' version {version}' if version else ''} not found on PyPI."
             ) from e
         raise
+
+
 def _scrape_user_profile_url(package_name: str) -> Optional[str]:
     """Scrapes the PyPI project page to find the user profile URL."""
     try:
@@ -73,8 +76,8 @@ def _fetch_other_package_urls(user_profile_url: str) -> Set[str]:
 
         # Links to packages are in a 'package-snippet' class
         for link in soup.find_all("a", class_="package-snippet"):
-            if link.has_attr("href") and link['href'].startswith("/project/"):
-                packages.add(link['href'].split('/')[2])
+            if link.has_attr("href") and link["href"].startswith("/project/"): # type: ignore[union-attr]
+                packages.add(link["href"].split("/")[2]) # type: ignore[union-attr]
         logger.debug(f"Found {len(packages)} other packages by user.")
         return packages
     except NetworkError as e:
@@ -99,24 +102,30 @@ def cross_reference_by_user(package_name: str) -> List[EvidenceRecord]:
     # --- NEW: Always create evidence for the PyPI user if found ---
     if profile_url:
         try:
-            username = profile_url.strip('/').split('/')[-1]
+            username = profile_url.strip('/').rsplit('/', maxsplit=1)[-1]
             value = {"name": username, "url": profile_url}
             record = EvidenceRecord(
                 id=generate_evidence_id(
-                    EvidenceSource.PYPI, EvidenceKind.PYPI_USER, profile_url, str(value), username
+                    EvidenceSource.PYPI,
+                    EvidenceKind.PYPI_USER,
+                    profile_url,
+                    str(value),
+                    username,
                 ),
                 source=EvidenceSource.PYPI,
                 locator=profile_url,
                 kind=EvidenceKind.PYPI_USER,
                 value=value,
                 observed_at=datetime.datetime.now(datetime.timezone.utc),
-                confidence=0.50, # This is a strong signal
-                notes=f"Package is published by PyPI user '{username}'."
+                confidence=0.50,  # This is a strong signal
+                notes=f"Package is published by PyPI user '{username}'.",
             )
             new_evidence.append(record)
             logger.debug(f"Created evidence record for PyPI user '{username}'.")
         except (IndexError, TypeError) as e:
-            logger.warning(f"Could not parse username from profile URL '{profile_url}': {e}")
+            logger.warning(
+                f"Could not parse username from profile URL '{profile_url}': {e}"
+            )
 
     # --- Continue with existing cross-referencing logic ---
     if not profile_url:
@@ -143,5 +152,7 @@ def cross_reference_by_user(package_name: str) -> List[EvidenceRecord]:
             logger.debug(f"Skipping related package '{other_pkg}', not found.")
             continue
 
-    logger.info(f"Found {len(new_evidence)} new evidence records via user cross-reference.")
+    logger.info(
+        f"Found {len(new_evidence)} new evidence records via user cross-reference."
+    )
     return new_evidence

@@ -1,18 +1,20 @@
 # skip_trace/schemas.py
+from __future__ import annotations
 
 import datetime
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, List, Literal, Optional
-
+from typing import Any, List, Optional
 
 # --- Enums for controlled vocabularies ---
+
 
 class OwnerKind(str, Enum):
     INDIVIDUAL = "individual"
     COMPANY = "company"
     FOUNDATION = "foundation"
     PROJECT = "project"
+
 
 class ContactType(str, Enum):
     EMAIL = "email"
@@ -24,7 +26,7 @@ class ContactType(str, Enum):
     TWITTER = "twitter"
     MASTODON = "mastodon"
     LINKEDIN = "linkedin"
-    # NEW: Add more common social platforms
+    # Add more common social platforms
     FACEBOOK = "facebook"
     INSTAGRAM = "instagram"
     YOUTUBE = "youtube"
@@ -43,6 +45,7 @@ class EvidenceSource(str, Enum):
     VENV_SCAN = "venv-scan"
     LLM_NER = "llm-ner"
 
+
 class EvidenceKind(str, Enum):
     PERSON = "person"
     EMAIL = "email"
@@ -57,19 +60,21 @@ class EvidenceKind(str, Enum):
     CONTACT = "contact"
     PROJECT_URL = "project-url"
     PYPI_USER = "pypi-user"
-    # NEW: GitHub-specific evidence kinds
+    # GitHub-specific evidence kinds
     REPO_OWNER = "repo-owner"
     COMMIT_AUTHOR = "commit-author"
-    # NEW: GitHub profile-specific evidence kinds
+    # GitHub profile-specific evidence kinds
     USER_PROFILE = "user-profile"
     USER_COMPANY = "user-company"
 
 
 # --- Core Data Schemas ---
 
+
 @dataclass
 class Contact:
     """Represents a method of contacting an entity."""
+
     type: ContactType
     value: str
     verified: bool = False
@@ -78,6 +83,7 @@ class Contact:
 @dataclass
 class EvidenceRecord:
     """A single piece of evidence supporting an ownership claim."""
+
     id: str
     source: EvidenceSource
     locator: str  # URL, file path, or PURL
@@ -92,17 +98,19 @@ class EvidenceRecord:
 @dataclass
 class OwnerCandidate:
     """Represents a potential owner with an aggregated score."""
+
     name: str
     kind: OwnerKind
     score: float = 0.0
     contacts: List[Contact] = field(default_factory=list)
-    evidence: List[str] = field(default_factory=list) # List of EvidenceRecord IDs
+    evidence: List[str] = field(default_factory=list)  # List of EvidenceRecord IDs
     rationale: str = ""
 
 
 @dataclass
 class Maintainer:
     """A simplified maintainer record, distinct from a scored owner."""
+
     name: str
     email: Optional[str] = None
     confidence: float = 0.0
@@ -111,6 +119,7 @@ class Maintainer:
 @dataclass
 class PackageResult:
     """The final JSON output for a single package."""
+
     package: str
     version: Optional[str] = None
     owners: List[OwnerCandidate] = field(default_factory=list)

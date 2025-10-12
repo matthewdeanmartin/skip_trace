@@ -1,13 +1,14 @@
 # skip_trace/collectors/github.py
+from __future__ import annotations
 
 import datetime
 import logging
-from typing import List, Optional, Set, Dict
+from typing import Dict, List, Optional, Set
 from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
 from github import Github, GithubException
-from github.GitAuthor import GitAuthor
+
 from github.NamedUser import NamedUser
 
 from ..analysis.evidence import generate_evidence_id
@@ -38,7 +39,9 @@ def get_github_client() -> Optional[Github]:
     api_key = github_config.get("api_key")
 
     if not api_key:
-        logger.warning("GITHUB_TOKEN not found in environment. GitHub API requests will be unauthenticated and rate-limited.")
+        logger.warning(
+            "GITHUB_TOKEN not found in environment. GitHub API requests will be unauthenticated and rate-limited."
+        )
         _github_client = Github()
     else:
         logger.debug("Authenticating to GitHub API with token.")
@@ -74,22 +77,26 @@ def _scrape_socials_from_html(html_url: str) -> Dict[str, str]:
         # Find all links within the user profile section
         # profile_links = soup.select('div[data-bio-টারের] a[href], ul.vcard-details a[href]')
         # brittle!
-        profile_links = soup.select('div.user-profile-bio a[href], ul.vcard-details a[href]')
+        profile_links = soup.select(
+            "div.user-profile-bio a[href], ul.vcard-details a[href]"
+        )
         for link in profile_links:
-            href = link.get('href')
+            href = link.get("href")
             if not href:
                 continue
 
             # Simple heuristic mapping of domain to platform name
             if "linkedin.com/in" in href and "linkedin" not in contacts:
-                contacts["linkedin"] = href
-            elif ("mastodon.social" in href or "fosstodon.org" in href) and "mastodon" not in contacts:
-                contacts["mastodon"] = href
+                contacts["linkedin"] = href  # type: ignore[assignment]
+            elif (
+                "mastodon.social" in href or "fosstodon.org" in href
+            ) and "mastodon" not in contacts:
+                contacts["mastodon"] = href   # type: ignore[assignment]
             elif "twitter.com" in href and "twitter" not in contacts:
                 # Prefer the twitter_username from API, but take this if needed
-                contacts["twitter"] = href
+                contacts["twitter"] = href   # type: ignore[assignment]
             elif "blog." in href or "medium.com" in href and "blog" not in contacts:
-                contacts["blog"] = href
+                contacts["blog"] = href   # type: ignore[assignment]
 
     except NetworkError as e:
         logger.warning(f"Could not scrape GitHub profile page {html_url}: {e}")
@@ -107,23 +114,36 @@ def _create_records_from_user_profile(user: NamedUser) -> List[EvidenceRecord]:
 
     # Evidence for company affiliation
     if user.company:
-        value = {"user_name": name, "company_name": user.company}
-        records.append(EvidenceRecord(
-            id=generate_evidence_id(EvidenceSource.REPO, EvidenceKind.USER_COMPANY, user.html_url, str(value), name, hint="company"),
-            source=EvidenceSource.REPO,
-            locator=user.html_url,
-            kind=EvidenceKind.USER_COMPANY,
-            value=value,
-            observed_at=now,
-            confidence=0.8,
-            notes=f"User '{name}' lists company affiliation as '{user.company}'."
-        ))
+        value:dict[str, str | None] = {"user_name": name, "company_name": user.company}
+        records.append(
+            EvidenceRecord(
+                id=generate_evidence_id(
+                    EvidenceSource.REPO,
+                    EvidenceKind.USER_COMPANY,
+                    user.html_url,
+                    str(value),
+                    name,
+                    hint="company",
+                ),
+                source=EvidenceSource.REPO,
+                locator=user.html_url,
+                kind=EvidenceKind.USER_COMPANY,
+                value=value,
+                observed_at=now,
+                confidence=0.8,
+                notes=f"User '{name}' lists company affiliation as '{user.company}'.",
+            )
+        )
 
     # Evidence for other profile contacts
     profile_contacts = {
         "email": user.email,
-        "twitter": f"https://twitter.com/{user.twitter_username}" if user.twitter_username else None,
-        "blog": user.blog
+        "twitter": (
+            f"https://twitter.com/{user.twitter_username}"
+            if user.twitter_username
+            else None
+        ),
+        "blog": user.blog,
     }
 
     # Scrape HTML for links not available in the API
@@ -134,18 +154,26 @@ def _create_records_from_user_profile(user: NamedUser) -> List[EvidenceRecord]:
     # Filter out empty values
     profile_contacts = {k: v for k, v in profile_contacts.items() if v}
     if profile_contacts:
-        value = {"user_name": name, "contacts": profile_contacts}
-        records.append(EvidenceRecord(
-            id=generate_evidence_id(EvidenceSource.REPO, EvidenceKind.USER_PROFILE, user.html_url, str(value), name,
-                                    hint="profile"),
-            source=EvidenceSource.REPO,
-            locator=user.html_url,
-            kind=EvidenceKind.USER_PROFILE,
-            value=value,
-            observed_at=now,
-            confidence=0.9,
-            notes=f"Found contact details on GitHub user profile for '{name}'."
-        ))
+        profile_info = {"user_name": name, "contacts": profile_contacts}
+        records.append(
+            EvidenceRecord(
+                id=generate_evidence_id(
+                    EvidenceSource.REPO,
+                    EvidenceKind.USER_PROFILE,
+                    user.html_url,
+                    str(profile_info), # TODO: stringify this better?
+                    name,
+                    hint="profile",
+                ),
+                source=EvidenceSource.REPO,
+                locator=user.html_url,
+                kind=EvidenceKind.USER_PROFILE,
+                value=profile_info,
+                observed_at=now,
+                confidence=0.9,
+                notes=f"Found contact details on GitHub user profile for '{name}'.",
+            )
+        )
 
     return records
 
@@ -185,19 +213,30 @@ def extract_from_repo_url(repo_url: str) -> List[EvidenceRecord]:
         commits = repo.get_commits()
         # Limit to the most recent 25 commits to avoid excessive API usage
         for i, commit in enumerate(commits):
-            if i >= 10: # Limit to recent 10 to reduce API calls
+            if i >= 10:  # Limit to recent 10 to reduce API calls
                 break
             # commit.author is a full NamedUser if available
-            if isinstance(commit.author, NamedUser) and commit.author.login not in processed_users:
+            if (
+                isinstance(commit.author, NamedUser)
+                and commit.author.login not in processed_users
+            ):
                 evidence.extend(_create_records_from_user_profile(commit.author))
                 processed_users.add(commit.author.login)
 
     except GithubException as e:
         logger.error(f"GitHub API error for '{repo_full_name}': {e.status} {e.data}")
-        raise CollectorError(f"Could not access GitHub repository '{repo_full_name}'") from e
+        raise CollectorError(
+            f"Could not access GitHub repository '{repo_full_name}'"
+        ) from e
     except Exception as e:
-        logger.error(f"An unexpected error occurred while processing GitHub repo '{repo_full_name}': {e}")
-        raise CollectorError(f"Unexpected error for GitHub repo '{repo_full_name}'") from e
+        logger.error(
+            f"An unexpected error occurred while processing GitHub repo '{repo_full_name}': {e}"
+        )
+        raise CollectorError(
+            f"Unexpected error for GitHub repo '{repo_full_name}'"
+        ) from e
 
-    logger.info(f"Extracted {len(evidence)} evidence records from GitHub user profiles for repo '{repo_full_name}'.")
+    logger.info(
+        f"Extracted {len(evidence)} evidence records from GitHub user profiles for repo '{repo_full_name}'."
+    )
     return evidence

@@ -1,24 +1,23 @@
 # skip_trace/utils/validation.py
+from __future__ import annotations
 
 import logging
 from typing import Optional
 
-try:
-    from email_validator import EmailNotValidError, validate_email
+from email_validator import EmailNotValidError, validate_email
 
-    EMAIL_VALIDATOR_AVAILABLE = True
-except ImportError:
-    EMAIL_VALIDATOR_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
 RESERVED_DOMAINS = {
-    "example.com", "example.net", "example.org",
-    "localhost", "localhost.localdomain"
+    "example.com",
+    "example.net",
+    "example.org",
+    "localhost",
+    "localhost.localdomain",
 }
 
 RESERVED_SUFFIXES = {".test", ".example", ".invalid", ".localhost"}
-
 
 
 def is_valid_email(email_string: str) -> Optional[str]:
@@ -34,12 +33,6 @@ def is_valid_email(email_string: str) -> Optional[str]:
     if not isinstance(email_string, str):
         return None
 
-    if not EMAIL_VALIDATOR_AVAILABLE:
-        # Fallback to a simple check if the library is not installed
-        if "@" in email_string and "." in email_string and " " not in email_string:
-            return email_string.strip().lower()
-        return None
-
     try:
         # We only care about syntactic validity, not whether the domain's
         # mail server is reachable, so we disable deliverability checks.
@@ -49,7 +42,9 @@ def is_valid_email(email_string: str) -> Optional[str]:
             if valid.domain.endswith(reserved):
                 return None
 
-        if valid.domain in RESERVED_DOMAINS or any(valid.domain.endswith(suffix) for suffix in RESERVED_SUFFIXES):
+        if valid.domain in RESERVED_DOMAINS or any(
+            valid.domain.endswith(suffix) for suffix in RESERVED_SUFFIXES
+        ):
             return None
 
         return valid.normalized

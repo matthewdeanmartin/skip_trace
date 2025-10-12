@@ -1,4 +1,5 @@
 # skip_trace/reporting/json_reporter.py
+from __future__ import annotations
 
 import dataclasses
 import json
@@ -6,6 +7,7 @@ import sys
 from typing import IO
 
 from ..schemas import PackageResult
+
 
 def render(result: PackageResult, file: IO[str] = sys.stdout):
     """

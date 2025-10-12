@@ -1,4 +1,5 @@
 # skip_trace/analysis/source_scanner.py
+from __future__ import annotations
 
 import datetime
 import logging
@@ -7,12 +8,11 @@ import re
 import string
 from typing import List
 
-import tldextract
 
 from ..schemas import EvidenceKind, EvidenceRecord, EvidenceSource
 from ..utils.validation import is_valid_email
-from .evidence import generate_evidence_id, _parse_contact_string
-from . import ner  # Import the new NER module
+from . import ner
+from .evidence import _parse_contact_string, generate_evidence_id
 
 logger = logging.getLogger(__name__)
 
@@ -26,28 +26,61 @@ COPYRIGHT_RE = re.compile(
 AUTHOR_RE = re.compile(r"__author__\s*=\s*['\"]([^'\"]+)['\"]")
 
 # Regex for finding standalone email addresses - used as a fast pre-filter
-EMAIL_RE = re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b')
+EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b")
 
-# NEW: Words that indicate a regex grabbed junk from a license instead of a name.
+# Words that indicate a regex grabbed junk from a license instead of a name.
 # This filter now lives in the scanner, where the bad evidence is generated.
 JUNK_WORDS = {
-    "copyright", "holders", "license", "document", "accompanies", "notice", "authors",
-    "identifies", "endorse", "promote", "software", "permission", "conditions",
+    "copyright",
+    "holders",
+    "license",
+    "document",
+    "accompanies",
+    "notice",
+    "authors",
+    "identifies",
+    "endorse",
+    "promote",
+    "software",
+    "permission",
+    "conditions",
     # stop words
-    "and", "other", "the", "for", "with", "this", "list", "following", "txt", "damages",
+    "and",
+    "other",
+    "the",
+    "for",
+    "with",
+    "this",
+    "list",
+    "following",
+    "txt",
+    "damages",
     "owner",
     # legalese
-    "incidental", "holder", "liability",
+    "incidental",
+    "holder",
+    "liability",
     # license names
-    "MIT", "BSD"
+    "MIT",
+    "BSD",
 }
 
 # --- NEW: Filename allowlist and more robust binary detection ---
 
 # A set of common extensionless text files that should never be treated as binary.
 TEXT_FILENAMES = {
-    'readme', 'license', 'copying', 'notice', 'authors', 'contributors',
-    'changelog', 'history', 'install', 'makefile', 'dockerfile', 'vagrantfile'
+    "readme",
+    "license",
+    "copying",
+    "notice",
+    "authors",
+    "contributors",
+    "changelog",
+    "history",
+    "install",
+    "makefile",
+    "dockerfile",
+    "vagrantfile",
 }
 
 
@@ -72,7 +105,7 @@ def _is_binary_file(filepath: str, chunk_size: int = 1024) -> bool:
         return False
 
     try:
-        with open(filepath, 'rb') as f:
+        with open(filepath, "rb") as f:
             chunk = f.read(chunk_size)
     except IOError:
         return True  # Cannot read, so skip it.
@@ -81,12 +114,12 @@ def _is_binary_file(filepath: str, chunk_size: int = 1024) -> bool:
         return False  # Empty file is not binary.
 
     # 2. A null byte is a strong indicator of a binary file.
-    if b'\0' in chunk:
+    if b"\0" in chunk:
         return True
 
     # 3. Check the ratio of text characters to total characters.
     # A high percentage of non-printable characters indicates binary data.
-    printable = set(bytes(string.printable, 'ascii'))
+    printable = set(bytes(string.printable, "ascii"))
     non_printable_count = sum(1 for byte in chunk if byte not in printable)
 
     # If more than 30% of the characters are non-printable, it's likely binary.
@@ -95,7 +128,7 @@ def _is_binary_file(filepath: str, chunk_size: int = 1024) -> bool:
 
 
 def _process_authors_file(
-        content: str, locator: str, now: datetime.datetime
+    content: str, locator: str, now: datetime.datetime
 ) -> List[EvidenceRecord]:
     """Processes an AUTHORS file, treating each non-blank line as a potential author."""
     evidence_list = []
@@ -113,14 +146,20 @@ def _process_authors_file(
         name_for_slug = parsed["name"] or parsed["email"] or "unknown"
 
         record = EvidenceRecord(
-            id=generate_evidence_id(EvidenceSource.WHEEL, EvidenceKind.AUTHOR_TAG, locator, str(value), name_for_slug),
+            id=generate_evidence_id(
+                EvidenceSource.WHEEL,
+                EvidenceKind.AUTHOR_TAG,
+                locator,
+                str(value),
+                name_for_slug,
+            ),
             source=EvidenceSource.WHEEL,
             locator=locator,
             kind=EvidenceKind.AUTHOR_TAG,
             value=value,
             observed_at=now,
             confidence=0.20,  # Higher confidence than a random email
-            notes=f"Found author '{line}' in AUTHORS file."
+            notes=f"Found author '{line}' in AUTHORS file.",
         )
         evidence_list.append(record)
         logger.debug(f"Found author from AUTHORS file: {line}")
@@ -128,9 +167,7 @@ def _process_authors_file(
     return evidence_list
 
 
-def scan_directory(
-        directory_path: str, locator_prefix: str
-) -> List[EvidenceRecord]:
+def scan_directory(directory_path: str, locator_prefix: str) -> List[EvidenceRecord]:
     """
     Scans a directory of files for ownership evidence.
 
@@ -144,16 +181,62 @@ def scan_directory(
     evidence_list: List[EvidenceRecord] = []
     now = datetime.datetime.now(datetime.timezone.utc)
 
-    skip_dirs = {".git", "__pycache__", ".idea", ".vscode", "dist", "build", ".egg-info", "node_modules"}
+    skip_dirs = {
+        ".git",
+        "__pycache__",
+        ".idea",
+        ".vscode",
+        "dist",
+        "build",
+        ".egg-info",
+        "node_modules",
+    }
     # More comprehensive list of binary extensions
     skip_extensions = {
-        ".pyc", ".pyo", ".so", ".pyd", ".egg", ".whl",  # Python
-        ".o", ".a", ".dll", ".exe",  # Compiled
-        ".svg", ".png", ".jpg", ".jpeg", ".gif", ".ico", ".webp",  # Images
-        ".woff", ".woff2", ".ttf", ".eot", ".otf",  # Fonts
-        ".zip", ".tar", ".gz", ".bz2", ".7z", ".rar",  # Archives
-        ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".odt",  # Docs
-        ".mp3", ".mp4", ".wav", ".flac", ".ogg", ".mov", ".avi", ".mkv"  # Media
+        ".pyc",
+        ".pyo",
+        ".so",
+        ".pyd",
+        ".egg",
+        ".whl",  # Python
+        ".o",
+        ".a",
+        ".dll",
+        ".exe",  # Compiled
+        ".svg",
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".gif",
+        ".ico",
+        ".webp",  # Images
+        ".woff",
+        ".woff2",
+        ".ttf",
+        ".eot",
+        ".otf",  # Fonts
+        ".zip",
+        ".tar",
+        ".gz",
+        ".bz2",
+        ".7z",
+        ".rar",  # Archives
+        ".pdf",
+        ".doc",
+        ".docx",
+        ".xls",
+        ".xlsx",
+        ".ppt",
+        ".pptx",
+        ".odt",  # Docs
+        ".mp3",
+        ".mp4",
+        ".wav",
+        ".flac",
+        ".ogg",
+        ".mov",
+        ".avi",
+        ".mkv",  # Media
     }
 
     file_count = 0
@@ -171,7 +254,9 @@ def scan_directory(
                 continue
 
             if _is_binary_file(file_path):
-                logger.debug(f"Skipping binary file detected by content: {relative_path}")
+                logger.debug(
+                    f"Skipping binary file detected by content: {relative_path}"
+                )
                 continue
 
             logger.debug(f"Scanning file: {relative_path}")
@@ -183,11 +268,13 @@ def scan_directory(
                 locator = f"{locator_prefix}/{relative_path}"
 
                 # 1. Special handling for AUTHORS files
-                if filename.lower().startswith("authors") or filename.lower().startswith("contributors"):
+                if filename.lower().startswith(
+                    "authors"
+                ) or filename.lower().startswith("contributors"):
                     evidence_list.extend(_process_authors_file(content, locator, now))
                     continue  # Don't process this file further for generic matches
 
-                # MODIFIED: Use NER for copyright lines
+                # Use NER for copyright lines
                 for match in COPYRIGHT_RE.finditer(content):
                     copyright_text = match.group(1).strip().rstrip(",.")
 
@@ -196,14 +283,26 @@ def scan_directory(
                     if entities:
                         for entity_name, entity_label in entities:
                             if entity_name.lower() not in JUNK_WORDS:
-                                value = {"holder": entity_name, "file": relative_path}
+                                value: dict[str, str | None] = {
+                                    "holder": entity_name,
+                                    "file": relative_path,
+                                }
                                 notes = f"Found copyright holder '{entity_name}' via NER ({entity_label})."
                                 record = EvidenceRecord(
-                                    id=generate_evidence_id(EvidenceSource.WHEEL, EvidenceKind.COPYRIGHT, locator,
-                                                            str(value), entity_name),
-                                    source=EvidenceSource.WHEEL, locator=locator, kind=EvidenceKind.COPYRIGHT,
-                                    value=value, observed_at=now, confidence=0.40,  # Higher confidence for NER
-                                    notes=notes
+                                    id=generate_evidence_id(
+                                        EvidenceSource.WHEEL,
+                                        EvidenceKind.COPYRIGHT,
+                                        locator,
+                                        str(value),
+                                        entity_name,
+                                    ),
+                                    source=EvidenceSource.WHEEL,
+                                    locator=locator,
+                                    kind=EvidenceKind.COPYRIGHT,
+                                    value=value,
+                                    observed_at=now,
+                                    confidence=0.40,  # Higher confidence for NER
+                                    notes=notes,
                                 )
                                 already_in = False
                                 for already in evidence_list:
@@ -212,7 +311,7 @@ def scan_directory(
                                 if not already_in:
                                     evidence_list.append(record)
                     # else:
-                    #     # --- MODIFIED: Stricter filtering for the regex fallback ---
+                    #     # --- Stricter filtering for the regex fallback ---
                     #     # 1. Reject if it's too long to be a name.
                     #     if len(copyright_text) > 50: continue
                     #     # 2. Reject if it contains common license garbage words.
@@ -227,7 +326,7 @@ def scan_directory(
                     #         notes=f"Found copyright notice for '{copyright_text}' in file (regex fallback)."
                     #     )
                     #     evidence_list.append(record)else:
-                    #     # --- MODIFIED: Stricter filtering for the regex fallback ---
+                    #     # --- Stricter filtering for the regex fallback ---
                     #     # 1. Reject if it's too long to be a name.
                     #     if len(copyright_text) > 50: continue
                     #     # 2. Reject if it contains common license garbage words.
@@ -254,15 +353,20 @@ def scan_directory(
                         value = {"name": parsed["name"], "email": parsed["email"]}
                         name_for_slug = parsed["name"] or parsed["email"] or "unknown"
                         record = EvidenceRecord(
-                            id=generate_evidence_id(EvidenceSource.WHEEL, EvidenceKind.AUTHOR_TAG, locator, str(value),
-                                                    name_for_slug),
+                            id=generate_evidence_id(
+                                EvidenceSource.WHEEL,
+                                EvidenceKind.AUTHOR_TAG,
+                                locator,
+                                str(value),
+                                name_for_slug,
+                            ),
                             source=EvidenceSource.WHEEL,
                             locator=locator,
                             kind=EvidenceKind.AUTHOR_TAG,
                             value=value,
                             observed_at=now,
                             confidence=0.20,
-                            notes=f"Found __author__ tag for '{author_str}' in file."
+                            notes=f"Found __author__ tag for '{author_str}' in file.",
                         )
                         evidence_list.append(record)
 
@@ -272,16 +376,24 @@ def scan_directory(
                     potential_email = match.group(0)
                     if valid_email := is_valid_email(potential_email):
                         value = {"name": None, "email": valid_email}
-                        notes = f"Found validated contact email '{valid_email}' in file."
+                        notes = (
+                            f"Found validated contact email '{valid_email}' in file."
+                        )
                         record = EvidenceRecord(
-                            id=generate_evidence_id(EvidenceSource.WHEEL, EvidenceKind.CONTACT, locator, str(value), valid_email),
+                            id=generate_evidence_id(
+                                EvidenceSource.WHEEL,
+                                EvidenceKind.CONTACT,
+                                locator,
+                                str(value),
+                                valid_email,
+                            ),
                             source=EvidenceSource.WHEEL,
                             locator=locator,
                             kind=EvidenceKind.CONTACT,
                             value=value,
                             observed_at=now,
                             confidence=0.15,  # Slightly higher confidence now that it's validated
-                            notes=notes
+                            notes=notes,
                         )
                         already_in = False
                         for already in evidence_list:
@@ -290,10 +402,11 @@ def scan_directory(
                         if not already_in:
                             evidence_list.append(record)
 
-
             except (IOError, UnicodeDecodeError) as e:
                 logger.debug(f"Could not read or process file {file_path}: {e}")
                 continue
 
-    logger.info(f"Scanned {file_count} files in directory, found {len(evidence_list)} potential evidence records.")
+    logger.info(
+        f"Scanned {file_count} files in directory, found {len(evidence_list)} potential evidence records."
+    )
     return evidence_list

@@ -1,7 +1,9 @@
 # skip_trace/utils/http_client.py
+from __future__ import annotations
+
+from typing import Optional
 
 import httpx
-from typing import Optional
 
 from ..config import CONFIG
 from ..exceptions import NetworkError

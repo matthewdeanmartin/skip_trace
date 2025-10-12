@@ -1,4 +1,5 @@
 # skip_trace/analysis/evidence.py
+from __future__ import annotations
 
 import datetime
 import hashlib
@@ -31,20 +32,20 @@ def _slugify(text: str) -> str:
     if not text:
         return ""
     # Simple ASCII folding
-    text = text.encode('ascii', 'ignore').decode('ascii')
+    text = text.encode("ascii", "ignore").decode("ascii")
     text = text.lower()
     # Replace non-alphanumeric with hyphen
-    text = re.sub(r'[^a-z0-9]+', '-', text).strip('-')
+    text = re.sub(r"[^a-z0-9]+", "-", text).strip("-")
     return text
 
 
 def generate_evidence_id(
-        source: EvidenceSource,
-        kind: EvidenceKind,
-        locator: str,
-        value: Any,  # Changed to Any for dataclasses
-        slug_subject: str,
-        hint: Optional[str] = None
+    source: EvidenceSource,
+    kind: EvidenceKind,
+    locator: str,
+    value: Any,  # Changed to Any for dataclasses
+    slug_subject: str,
+    hint: Optional[str] = None,
 ) -> str:
     """
     Generates a human-readable and deterministic Evidence ID.
@@ -72,10 +73,11 @@ def generate_evidence_id(
 
     # Create the hash
     hasher = hashlib.sha256()
-    hasher.update(f"{source.value}|{kind.value}|{locator}|{value}".encode('utf-8'))
+    hasher.update(f"{source.value}|{kind.value}|{locator}|{value}".encode("utf-8"))
     hash8 = hasher.hexdigest()[:8]
 
     return f"e-{source.value}-{kind.value}-{slug}~{hash8}"
+
 
 def _parse_contact_string(contact_str: str) -> Dict[str, Optional[str]]:
     """
@@ -93,7 +95,7 @@ def _parse_contact_string(contact_str: str) -> Dict[str, Optional[str]]:
         return {"name": None, "email": None}
 
     # Pattern for "Name <email@domain.com>"
-    match = re.search(r'(.+)<(.+)>', contact_str)
+    match = re.search(r"(.+)<(.+)>", contact_str)
     if match:
         name = match.group(1).strip()
         # Validate the email part using the robust validator
@@ -114,7 +116,7 @@ def _parse_contact_string(contact_str: str) -> Dict[str, Optional[str]]:
     return {"name": None, "email": None}
 
 
-# NEW: Helper to sanitize fields that might contain the literal string "None"
+# Helper to sanitize fields that might contain the literal string "None"
 def _clean_pypi_field(field_value: Any) -> str:
     """Returns an empty string if the field is None or the literal string 'None'."""
     if field_value is None or str(field_value).strip().lower() == "none":
@@ -122,7 +124,9 @@ def _clean_pypi_field(field_value: Any) -> str:
     return str(field_value).strip()
 
 
-def extract_from_pypi(metadata: Dict[str, Any]) -> Tuple[List[EvidenceRecord], List[Maintainer]]:
+def extract_from_pypi(
+    metadata: Dict[str, Any],
+) -> Tuple[List[EvidenceRecord], List[Maintainer]]:
     """
     Extracts evidence from raw PyPI package metadata.
 
@@ -150,7 +154,7 @@ def extract_from_pypi(metadata: Dict[str, Any]) -> Tuple[List[EvidenceRecord], L
 
     # --- Create separate evidence for names and emails ---
     def process_contact_string(
-            raw_string: str, role_kind: EvidenceKind, field_name: str
+        raw_string: str, role_kind: EvidenceKind, field_name: str
     ) -> None:
         """
         Parses a string for contacts and creates separate evidence records
@@ -162,7 +166,7 @@ def extract_from_pypi(metadata: Dict[str, Any]) -> Tuple[List[EvidenceRecord], L
         def add_separate_evidence(
             parsed_contact: Dict[str, Optional[str]],
             source_note: str,
-            confidence: float
+            confidence: float,
         ) -> None:
             """Creates and appends separate evidence for name and email."""
             name = parsed_contact.get("name")
@@ -172,11 +176,12 @@ def extract_from_pypi(metadata: Dict[str, Any]) -> Tuple[List[EvidenceRecord], L
             if name or email:
                 key = (name, email)
                 if key not in seen_maintainers:
-                    maintainer_list.append(Maintainer(
-                        name=name or "Unknown", email=email, confidence=confidence
-                    ))
+                    maintainer_list.append(
+                        Maintainer(
+                            name=name or "Unknown", email=email, confidence=confidence
+                        )
+                    )
                     seen_maintainers.add(key)
-
 
             # Create evidence for the name, if it exists
             if name:
@@ -184,17 +189,21 @@ def extract_from_pypi(metadata: Dict[str, Any]) -> Tuple[List[EvidenceRecord], L
                 kind = EvidenceKind.PERSON
                 value = {"name": name}
                 record = EvidenceRecord(
-                    id=generate_evidence_id(EvidenceSource.PYPI, kind, locator, str(value), name),
+                    id=generate_evidence_id(
+                        EvidenceSource.PYPI, kind, locator, str(value), name
+                    ),
                     source=EvidenceSource.PYPI,
                     locator=locator,
                     kind=kind,
                     value=value,
                     observed_at=now,
                     confidence=confidence,
-                    notes=f"Found person '{name}' from PyPI '{field_name}' field ({source_note}). Designated as {role_kind.value}."
+                    notes=f"Found person '{name}' from PyPI '{field_name}' field ({source_note}). Designated as {role_kind.value}.",
                 )
                 evidence_list.append(record)
-                logger.debug(f"Created {kind.value} evidence for '{name}' from '{field_name}'.")
+                logger.debug(
+                    f"Created {kind.value} evidence for '{name}' from '{field_name}'."
+                )
 
             # Create evidence for the email, if it exists
             if email:
@@ -202,25 +211,31 @@ def extract_from_pypi(metadata: Dict[str, Any]) -> Tuple[List[EvidenceRecord], L
                 kind = EvidenceKind.EMAIL
                 value = {"email": email}
                 # Use the name for the slug if available, otherwise email's local part
-                slug_subject = name or email.split('@')[0]
+                slug_subject = name or email.split("@")[0]
                 record = EvidenceRecord(
-                    id=generate_evidence_id(EvidenceSource.PYPI, kind, locator, str(value), slug_subject),
+                    id=generate_evidence_id(
+                        EvidenceSource.PYPI, kind, locator, str(value), slug_subject
+                    ),
                     source=EvidenceSource.PYPI,
                     locator=locator,
                     kind=kind,
                     value=value,
                     observed_at=now,
                     confidence=confidence + 0.1,  # Emails are slightly more reliable
-                    notes=f"Found email for '{slug_subject}' from PyPI '{field_name}' field ({source_note}). Designated as {role_kind.value}."
+                    notes=f"Found email for '{slug_subject}' from PyPI '{field_name}' field ({source_note}). Designated as {role_kind.value}.",
                 )
                 evidence_list.append(record)
-                logger.debug(f"Created {kind.value} evidence for '{email}' from '{field_name}'.")
+                logger.debug(
+                    f"Created {kind.value} evidence for '{email}' from '{field_name}'."
+                )
 
         # Attempt to use NER to find multiple entities
         entities = ner.extract_entities(raw_string)
         if entities:
-            logger.debug(f"NER found {len(entities)} entities in PyPI field '{field_name}': {entities}")
-            for entity_name, entity_label in entities:
+            logger.debug(
+                f"NER found {len(entities)} entities in PyPI field '{field_name}': {entities}"
+            )
+            for entity_name, _entity_label in entities:
                 parsed = _parse_contact_string(entity_name)
                 add_separate_evidence(parsed, "NER", confidence=0.45)
         # else:
@@ -234,7 +249,9 @@ def extract_from_pypi(metadata: Dict[str, Any]) -> Tuple[List[EvidenceRecord], L
     # Prefer email string as it's more likely to contain both name and email
     author_string = author_email or author_name
     if author_string:
-        process_contact_string(author_string, EvidenceKind.AUTHOR_TAG, "author/author_email")
+        process_contact_string(
+            author_string, EvidenceKind.AUTHOR_TAG, "author/author_email"
+        )
 
     maintainer_name = _clean_pypi_field(info.get("maintainer"))
     maintainer_email = _clean_pypi_field(info.get("maintainer_email"))
@@ -242,7 +259,9 @@ def extract_from_pypi(metadata: Dict[str, Any]) -> Tuple[List[EvidenceRecord], L
 
     # Only process maintainer if it's different from the author string
     if maintainer_string and maintainer_string != author_string:
-        process_contact_string(maintainer_string, EvidenceKind.MAINTAINER, "maintainer/maintainer_email")
+        process_contact_string(
+            maintainer_string, EvidenceKind.MAINTAINER, "maintainer/maintainer_email"
+        )
 
     # --- Project URL parsing ---
     project_urls = info.get("project_urls")
@@ -257,7 +276,7 @@ def extract_from_pypi(metadata: Dict[str, Any]) -> Tuple[List[EvidenceRecord], L
             logger.debug(f"Parsing project URL ({label}): {url}")
 
             if repo_host in ("github", "gitlab", "codeberg"):
-                path_parts = url.strip('/').split('/')
+                path_parts = url.strip("/").split("/")
                 if len(path_parts) >= 4:
                     org_or_user = path_parts[3]
                     logger.debug(f"Extracted user/org '{org_or_user}' from URL.")
@@ -265,8 +284,12 @@ def extract_from_pypi(metadata: Dict[str, Any]) -> Tuple[List[EvidenceRecord], L
                     notes = f"Found user/org '{org_or_user}' from repository URL in project_urls."
                     record = EvidenceRecord(
                         id=generate_evidence_id(
-                            EvidenceSource.PYPI, EvidenceKind.ORGANIZATION, locator, str(value), org_or_user,
-                            hint=f"{repo_host}-user"
+                            EvidenceSource.PYPI,
+                            EvidenceKind.ORGANIZATION,
+                            locator,
+                            str(value),
+                            org_or_user,
+                            hint=f"{repo_host}-user",
                         ),
                         source=EvidenceSource.PYPI,
                         locator=locator,
@@ -274,7 +297,7 @@ def extract_from_pypi(metadata: Dict[str, Any]) -> Tuple[List[EvidenceRecord], L
                         value=value,
                         observed_at=now,
                         confidence=0.35,
-                        notes=notes
+                        notes=notes,
                     )
                     already_in = False
                     for already in evidence_list:
@@ -283,5 +306,7 @@ def extract_from_pypi(metadata: Dict[str, Any]) -> Tuple[List[EvidenceRecord], L
                     if not already_in:
                         evidence_list.append(record)
 
-    logger.info(f"Extracted {len(evidence_list)} evidence records and {len(maintainer_list)} maintainers from PyPI.")
+    logger.info(
+        f"Extracted {len(evidence_list)} evidence records and {len(maintainer_list)} maintainers from PyPI."
+    )
     return evidence_list, maintainer_list

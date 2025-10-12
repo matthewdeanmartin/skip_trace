@@ -1,4 +1,5 @@
 # skip_trace/config.py
+from __future__ import annotations
 
 import os
 from typing import Any, Dict, Optional, cast
@@ -40,29 +41,41 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "user_agent": "skip-trace/0.1.0",
         "timeout": 30,
     },
-    # NEW: GitHub API configuration
+    # GitHub API configuration
     "github": {
         "api_key_env_var": "GITHUB_TOKEN",
     },
-    # NEW: Cache configuration
+    # Cache configuration
     "cache": {
         "enabled": True,
         "dir": ".skip_trace_cache",
         "ttl_seconds": 604800,  # 7 days
     },
-    # NEW: Domains to ignore for WHOIS lookups
+    # Domains to ignore for WHOIS lookups
     "whois_ignored_domains": [
-        "gmail.com", "googlemail.com", "google.com",
-        "yahoo.com", "hotmail.com", "outlook.com", "live.com", "msn.com",
-        "aol.com", "icloud.com", "me.com", "mac.com",
-        "protonmail.com", "pm.me",
-        "github.com", "users.noreply.github.com",
+        "gmail.com",
+        "googlemail.com",
+        "google.com",
+        "yahoo.com",
+        "hotmail.com",
+        "outlook.com",
+        "live.com",
+        "msn.com",
+        "aol.com",
+        "icloud.com",
+        "me.com",
+        "mac.com",
+        "protonmail.com",
+        "pm.me",
+        "github.com",
+        "users.noreply.github.com",
         "gitlab.com",
         "sourceforge.net",
         "readthedocs.io",
-        "twitter.com", "mastodon.social",
+        "twitter.com",
+        "mastodon.social",
         "linkedin.com",
-        "googlegroups.com"
+        "googlegroups.com",
     ],
     "suppressed_tool_orgs": [
         "github",
@@ -134,14 +147,16 @@ def load_config(test_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         # Ensure the key is nested correctly in the final config object
         config["llm"]["api_key"] = api_key
 
-    # NEW: GitHub API Key
+    # GitHub API Key
     github_config = config.get("github", {})
     gh_api_key_env_var = github_config.get("api_key_env_var")
     if gh_api_key_env_var:
         gh_api_key = os.getenv(gh_api_key_env_var)
         config["github"]["api_key"] = gh_api_key
 
-    config["lenient_mode_enabled"] = os.getenv("SKIP_TRACE_INCLUDE_TOOL_ORGS") is not None
+    config["lenient_mode_enabled"] = (
+        os.getenv("SKIP_TRACE_INCLUDE_TOOL_ORGS") is not None
+    )
 
     return cast(Dict[str, Any], config)
 

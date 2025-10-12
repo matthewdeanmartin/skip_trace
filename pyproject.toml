@@ -1,8 +1,5 @@
 # pyproject.toml
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
 
 [project]
 name = "skip-trace"
@@ -10,7 +7,7 @@ version = "0.1.0"
 description = "Ownership Attribution for Python Packages"
 readme = "README.md"
 authors = [
-    { name = "Gemini", email = "gemini@example.com" },
+    { name = "Matthew Dean Martin", email = "matthewdeanmartin@gmail.com" },
 ]
 requires-python = ">=3.8"
 classifiers = [
@@ -20,10 +17,10 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Topic :: Security",
     "Topic :: Software Development :: Quality Assurance",
+    "Development Status :: 1 - Planning"
 ]
 dependencies = [
     "httpx[http2]>=0.25.0",
@@ -33,7 +30,7 @@ dependencies = [
     "tomli; python_version < '3.11'", # For reading pyproject.toml
     "python-dotenv",
     "tldextract",
-     "beautifulsoup4>=4.12.0", # Added for HTML scraping
+    "beautifulsoup4>=4.12.0", # Added for HTML scraping
     "PyGithub>=1.59.0", # NEW: For GitHub API interaction
     "openai>=1.3.0",
     "sigstore>=1.0.0",
@@ -45,21 +42,95 @@ dependencies = [
     "pip",
     "email-validator>=2.0.0", # For robust email validation
     # "en_core_web_sm"
+    "rich-argparse",
+    "en-core-web-sm",
+]
+
+
+[dependency-groups]
+dev = [
+    "jiggle-version>=2.0.1",
+    "maturin>=1.9.6; python_version >= '3.14'",
+    "pydantic>=2.12.0; python_version >= '3.14'",
+    "troml-dev-status>=0.4.1; python_version >= '3.9'",
+    "git2md; python_version >= '3.10'",
+    "pyclean; python_version >= '3.12'",
+    "strip-docs>=1.0; python_version >= '3.12'",
+    "gha-update; python_version >= '3.12'",
+    "mkdocstrings[python]",
+    "mkdocs; python_version >= '3.12'",
+    "mdformat",
+    # plugin finder
+    "packaging; python_version >= '3.8'",
+    # mpy
+    "mypy; python_version >= '3.8'",
+    "types-toml; python_version >= '3.8'",
+    "types-jsonschema; python_version >= '3.8'",
+    # reports
+
+    # build
+    "vermin; python_version >= '3.8'",
+    "metametameta>=0.1.3; python_version >= '3.9'",
+    "hatchling; python_version >= '3.8'",
+    "ruff>=0.12.0; python_version >= '3.8'",
+    "pylint; python_version >= '3.8'",
+    "bandit; python_version >= '3.8'",
+    "pre-commit; python_version >= '3.8'",
+    # testing tools
+    "pytest; python_version >= '3.8'",
+    "pytest-cov; python_version >= '3.8'",
+    "pytest-xdist>=3.5.0; python_version >= '3.8'",
+    "pytest-randomly>=3.15.0; python_version >= '3.8'",
+    "pytest-sugar>=0.9.7; python_version >= '3.8'",
+    "pytest-mock; python_version >= '3.8'",
+    "pytest-unused-fixtures; python_version >= '3.10'",
+    "hypothesis[cli]; python_version >= '3.8'",
+    "detect-test-pollution",
+    "pytest-timeout>=2.4.0",
+    # docs
+    "interrogate>=1.5.0; python_version >= '3.8'",
+    "pydoctest==0.2.1; python_version >= '3.8'",
+    "pdoc3>=0.5.0; python_version >= '3.8'",
+    "mdformat>=0.5.0; python_version >= '3.8'",
+    "linkcheckmd>=1.4.0; python_version >= '3.8'",
+    "codespell>=2.2.6; python_version >= '3.8'",
+    "pyenchant>=3.2.2; python_version >= '3.8'",
 ]
 
 [project.urls]
 Homepage = "https://github.com/matthewdeanmartin/skip-trace"
 Issues = "https://github.com/matthewdeanmartin/skip-trace/issues"
 
-[project.optional-dependencies]
-llm = ["openai>=1.3.0"]
-sigstore = ["sigstore>=1.0.0"]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+#[tool.hatch.build.targets.wheel.sources]
+#"something..." = "skip_trace/..."
+
+[tool.hatch.build.targets.wheel]
+packages = ["skip_trace"]
+include = [
+    "skip_trace/**/*.py",
+    "skip_trace/py.typed",
+    "/README.md", "LICENSE",
+]
+
+[tool.hatch.build.targets.sdist]
+include = ["/README.md", "LICENSE", "/skip_trace", "/test"]
+
+#
+#[project.optional-dependencies]
+#llm = ["openai>=1.3.0"]
+#sigstore = ["sigstore>=1.0.0"]
 
 [project.scripts]
 skip-trace = "skip_trace.cli:main"
 
-[tool.hatch.version]
-path = "skip_trace/__init__.py"
+
+[tool.uv.sources]
+en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" }
+
 
 # --- Skip-Trace Application Configuration ---
 [tool.skip-trace]
@@ -77,3 +148,4 @@ entity_resolution_llm = false # As requested, disabled by default
 "governance_doc_org" = 0.20
 "llm_ner_claim" = 0.20 # Max weight for an LLM-only claim
 "conflict" = -0.15
+

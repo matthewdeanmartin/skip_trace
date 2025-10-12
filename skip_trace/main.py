@@ -1,4 +1,5 @@
 # skip_trace/main.py
+from __future__ import annotations
 
 import argparse
 import dataclasses
@@ -13,7 +14,7 @@ from rich.logging import RichHandler
 from . import schemas
 from .analysis import evidence as evidence_analyzer
 from .analysis import scoring
-from .collectors import github, pypi, whois, package_files
+from .collectors import github, package_files, pypi, whois
 from .config import CONFIG
 from .exceptions import CollectorError, NetworkError, NoEvidenceError
 from .reporting import json_reporter, md_reporter
@@ -46,10 +47,14 @@ def run_who_owns(args: argparse.Namespace) -> int:
         metadata = pypi.fetch_package_metadata(args.package, args.version)
         package_name = metadata.get("info", {}).get("name", args.package)
         package_version = metadata.get("info", {}).get("version")
-        logger.debug(f"Successfully fetched metadata for {package_name} v{package_version}")
+        logger.debug(
+            f"Successfully fetched metadata for {package_name} v{package_version}"
+        )
 
         # 2. Analyze primary package metadata
-        evidence_records, pypi_maintainers = evidence_analyzer.extract_from_pypi(metadata)
+        evidence_records, pypi_maintainers = evidence_analyzer.extract_from_pypi(
+            metadata
+        )
 
         # 3. Cross-Reference for more PyPI evidence
         cross_ref_evidence = pypi.cross_reference_by_user(package_name)
@@ -58,7 +63,10 @@ def run_who_owns(args: argparse.Namespace) -> int:
         # 4. Fetch evidence from code repositories found in PyPI evidence
         repo_urls = set()
         for record in evidence_records:
-            if record.source == schemas.EvidenceSource.PYPI and record.kind == schemas.EvidenceKind.ORGANIZATION:
+            if (
+                record.source == schemas.EvidenceSource.PYPI
+                and record.kind == schemas.EvidenceKind.ORGANIZATION
+            ):
                 url = record.value.get("url")
                 if url and "github.com" in url:
                     repo_urls.add(url)
@@ -79,13 +87,20 @@ def run_who_owns(args: argparse.Namespace) -> int:
             potential_domains: Set[str] = set()
 
             # Case 1: Maintainer/Author email
-            if record.kind in (schemas.EvidenceKind.EMAIL, schemas.EvidenceKind.MAINTAINER, schemas.EvidenceKind.AUTHOR_TAG):
+            if record.kind in (
+                schemas.EvidenceKind.EMAIL,
+                schemas.EvidenceKind.MAINTAINER,
+                schemas.EvidenceKind.AUTHOR_TAG,
+            ):
                 if email := record.value.get("email"):
                     if "@" in email:
                         potential_domains.add(email.split("@")[1])
 
             # Case 2: URL from project_urls or org links
-            elif record.kind in (schemas.EvidenceKind.ORGANIZATION, schemas.EvidenceKind.PROJECT_URL):
+            elif record.kind in (
+                schemas.EvidenceKind.ORGANIZATION,
+                schemas.EvidenceKind.PROJECT_URL,
+            ):
                 if url := record.value.get("url"):
                     extracted = tldextract.extract(url)
                     if extracted.registered_domain:
@@ -110,7 +125,9 @@ def run_who_owns(args: argparse.Namespace) -> int:
                     domains_to_check.add(domain)
 
         if domains_to_check:
-            logger.info(f"Found domains for WHOIS lookup: {', '.join(sorted(list(domains_to_check)))}")
+            logger.info(
+                f"Found domains for WHOIS lookup: {', '.join(sorted(list(domains_to_check)))}"
+            )
             for domain in domains_to_check:
                 try:
                     whois_evidence = whois.collect_from_domain(domain)
@@ -138,7 +155,7 @@ def run_who_owns(args: argparse.Namespace) -> int:
         )
 
         # 9. Report
-        if args.output_format == 'json':
+        if args.output_format == "json":
             json_reporter.render(package_result)
         else:
             md_reporter.render(package_result)
@@ -148,10 +165,9 @@ def run_who_owns(args: argparse.Namespace) -> int:
         top_score = owner_candidates[0].score if owner_candidates else 0
         if top_score >= 0.7:
             return 0  # Success
-        elif top_score >= 0.5:
+        if top_score >= 0.5:
             return 100  # Indeterminate
-        else:
-            return 101  # No usable evidence
+        return 101  # No usable evidence
 
         # TODO: Pass evidence_records to the scoring engine
         # Later, this will be replaced by a call to the analysis and reporting modules.
@@ -161,14 +177,11 @@ def run_who_owns(args: argparse.Namespace) -> int:
         # owners = analysis.scoring.score_owners(evidence)
         # package_result = schemas.PackageResult(package=args.package, owners=owners, evidence=evidence)
         # reporting.json_reporter.render(package_result)
-
-        return 0
+        # return 0
     except NoEvidenceError as e:
-        raise
         logger.error(f"{type(e).__name__}: {e}")
         return 101  # As per the PEP for "No usable evidence"
     except NetworkError as e:
-        raise
         print(f"Error: A network problem occurred: {e}", file=sys.stderr)
         return 101
 
@@ -183,15 +196,19 @@ def run_explain(args: argparse.Namespace) -> int:
 
         if args.id:
             # Filter for a specific evidence ID
-            record = next((r for r in evidence_records if r.id.startswith(args.id)), None)
+            record = next(
+                (r for r in evidence_records if r.id.startswith(args.id)), None
+            )
             if record:
-                output = dataclasses.asdict(record)
-            else:
-                logger.error(f"Evidence ID matching '{args.id}' not found.")
-                return 1
-        else:
-            # Show all evidence
-            output = [dataclasses.asdict(r) for r in evidence_records]
+                output_record = dataclasses.asdict(record)
+                print(json.dumps(output_record, indent=2, default=str))
+                return 0
+            logger.error(f"Evidence ID matching '{args.id}' not found.")
+            return 1
+        # Show all evidence
+        output: list[dict[str, str | None]] = [
+            dataclasses.asdict(r) for r in evidence_records
+        ]
 
         print(json.dumps(output, indent=2, default=str))
         return 0
@@ -218,6 +235,7 @@ def run_reqs(args: argparse.Namespace) -> int:
 
 
 # ... Add placeholder functions for other commands ...
+
 
 def run_command(args: argparse.Namespace) -> int:
     """
@@ -247,6 +265,7 @@ def run_command(args: argparse.Namespace) -> int:
 
     if handler:
         return handler(args)
-    else:
-        print(f"Error: Command '{args.command}' is not yet implemented.", file=sys.stderr)
-        return 2
+    print(
+        f"Error: Command '{args.command}' is not yet implemented.", file=sys.stderr
+    )
+    return 2

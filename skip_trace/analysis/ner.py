@@ -1,10 +1,12 @@
 # skip_trace/analysis/ner.py
+from __future__ import annotations
 
 import logging
-from typing import List, Tuple, Optional
+from typing import List, Optional, Tuple
 
 import spacy
 from spacy.language import Language
+
 SPACY_AVAILABLE = True
 
 

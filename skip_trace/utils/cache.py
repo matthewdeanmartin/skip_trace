@@ -1,4 +1,5 @@
 # skip_trace/utils/cache.py
+from __future__ import annotations
 
 import json
 import logging
@@ -19,7 +20,7 @@ def get_cache_path(cache_type: str, key: str) -> str:
     os.makedirs(cache_dir, exist_ok=True)
 
     # Sanitize key for filesystem compatibility
-    safe_key = "".join(c for c in key if c.isalnum() or c in ('-', '_', '.'))
+    safe_key = "".join(c for c in key if c.isalnum() or c in ("-", "_", "."))
     return os.path.join(cache_dir, f"{safe_key}.json")
 
 
@@ -45,7 +46,7 @@ def get_cached_data(cache_type: str, key: str) -> Optional[Any]:
         mod_time = os.path.getmtime(file_path)
         if (time.time() - mod_time) < ttl:
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     return json.load(f)
             except (json.JSONDecodeError, IOError) as e:
                 logger.warning(f"Could not read cache file {file_path}: {e}")
@@ -70,7 +71,7 @@ def set_cached_data(cache_type: str, key: str, data: Any):
 
     file_path = get_cache_path(cache_type, key)
     try:
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, default=str)
     except IOError as e:
         logger.error(f"Could not write to cache file {file_path}: {e}")

@@ -1,4 +1,4 @@
 # skip_trace/collectors/__init__.py
-from . import github, pypi, whois, package_files
+from . import github, package_files, pypi, whois
 
 __all__ = ["github", "pypi", "whois", "package_files"]

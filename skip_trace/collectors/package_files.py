@@ -1,10 +1,10 @@
 # skip_trace/collectors/package_files.py
+from __future__ import annotations
 
 import logging
 import os
 import shutil
 import tarfile
-import tempfile
 import zipfile
 from typing import Any, Dict, List, Optional
 
@@ -22,7 +22,7 @@ def _ensure_download_dir():
     os.makedirs(PACKAGE_DOWNLOAD_DIR, exist_ok=True)
     gitignore_path = os.path.join(PACKAGE_DOWNLOAD_DIR, ".gitignore")
     if not os.path.exists(gitignore_path):
-        with open(gitignore_path, "w") as f:
+        with open(gitignore_path, "w", encoding="utf-8") as f:
             f.write("*\n")
 
 
@@ -63,7 +63,9 @@ def collect_from_package_files(metadata: Dict[str, Any]) -> List[EvidenceRecord]
 
     download_url = _find_download_url(metadata)
     if not download_url:
-        logger.warning(f"No download URL found for {package_name}. Skipping file analysis.")
+        logger.warning(
+            f"No download URL found for {package_name}. Skipping file analysis."
+        )
         return []
 
     _ensure_download_dir()
@@ -79,14 +81,18 @@ def collect_from_package_files(metadata: Dict[str, Any]) -> List[EvidenceRecord]
                 with open(download_path, "wb") as f:
                     for chunk in response.iter_bytes():
                         f.write(chunk)
-        except (NetworkError, http_client.httpx.RequestError, http_client.httpx.HTTPStatusError) as e:
+        except (
+            NetworkError,
+            http_client.httpx.RequestError,
+            http_client.httpx.HTTPStatusError,
+        ) as e:
             raise CollectorError(f"Failed to download package {filename}: {e}") from e
 
     # Determine the persistent extraction directory path from the filename
     base_filename = filename
     for ext in [".whl", ".zip", ".tar.gz", ".tgz", ".tar.bz2"]:
         if base_filename.endswith(ext):
-            base_filename = base_filename[:-len(ext)]
+            base_filename = base_filename[: -len(ext)]
             break
     extract_dir = os.path.join(PACKAGE_DOWNLOAD_DIR, base_filename)
 
@@ -105,8 +111,10 @@ def collect_from_package_files(metadata: Dict[str, Any]) -> List[EvidenceRecord]
                 with tarfile.open(download_path, "r:bz2") as tf:
                     tf.extractall(extract_dir)
             else:
-                logger.warning(f"Unsupported archive format for {filename}. Skipping file scan.")
-                shutil.rmtree(extract_dir) # Clean up the empty dir
+                logger.warning(
+                    f"Unsupported archive format for {filename}. Skipping file scan."
+                )
+                shutil.rmtree(extract_dir)  # Clean up the empty dir
                 return []
         except (zipfile.BadZipFile, tarfile.TarError, PermissionError) as e:
             logger.error(f"Failed to extract archive {download_path}: {e}")
@@ -122,12 +130,15 @@ def collect_from_package_files(metadata: Dict[str, Any]) -> List[EvidenceRecord]
     if filename.endswith((".tar.gz", ".tgz", ".tar.bz2")):
         try:
             dir_contents = os.listdir(extract_dir)
-            if len(dir_contents) == 1 and os.path.isdir(os.path.join(extract_dir, dir_contents[0])):
+            if len(dir_contents) == 1 and os.path.isdir(
+                os.path.join(extract_dir, dir_contents[0])
+            ):
                 scan_target_dir = os.path.join(extract_dir, dir_contents[0])
         except FileNotFoundError:
-            logger.error(f"Extraction directory {extract_dir} not found after apparent success. Check permissions.")
+            logger.error(
+                f"Extraction directory {extract_dir} not found after apparent success. Check permissions."
+            )
             return []
-
 
     locator_prefix = f"{package_name}-{package_version}"
     evidence = source_scanner.scan_directory(scan_target_dir, locator_prefix)

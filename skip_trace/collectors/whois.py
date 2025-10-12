@@ -3,14 +3,13 @@ from __future__ import annotations
 
 import datetime as _dt
 import logging
-from typing import Dict, List, Optional, Any
-
-from whoisit import domain as rdap_domain
+from typing import Any, Dict, List, Optional
 
 import whois as python_whois
+from whoisit import domain as rdap_domain
 
 from ..analysis.evidence import generate_evidence_id
-from ..exceptions import CollectorError
+
 from ..schemas import EvidenceKind, EvidenceRecord, EvidenceSource
 from ..utils.cache import get_cached_data, set_cached_data
 
@@ -23,17 +22,26 @@ def _normalize_org_name(name: Optional[str]) -> Optional[str]:
         return None
     name = name.strip()
     common_suffixes = [
-        "LLC", "L.L.C.", "INC", "INCORPORATED", "CORP",
-        "CORPORATION", "LTD", "LIMITED", "GMBH", "S.A.", "S.L."
+        "LLC",
+        "L.L.C.",
+        "INC",
+        "INCORPORATED",
+        "CORP",
+        "CORPORATION",
+        "LTD",
+        "LIMITED",
+        "GMBH",
+        "S.A.",
+        "S.L.",
     ]
     up = name.upper()
     for suf in common_suffixes:
         suf_dot = f"{suf}."
         if up.endswith(f" {suf}") or up.endswith(f",{suf}"):
-            name = name[:-(len(suf) + 1)].strip().rstrip(",")
+            name = name[: -(len(suf) + 1)].strip().rstrip(",")
             break
         if up.endswith(f" {suf_dot}") or up.endswith(f",{suf_dot}"):
-            name = name[:-(len(suf_dot) + 1)].strip().rstrip(",")
+            name = name[: -(len(suf_dot) + 1)].strip().rstrip(",")
             break
     return name.title()
 
@@ -98,7 +106,7 @@ def _rdap_extract(w: Dict[str, Any]) -> Dict[str, Any]:
 
 def _whois_extract(w: Any) -> Dict[str, Any]:
     """Map python-whois result -> normalized fields."""
-    get = (w.get if hasattr(w, "get") else lambda k, d=None: getattr(w, k, d))
+    get = w.get if hasattr(w, "get") else lambda k, d=None: getattr(w, k, d)
     return {
         "org": get("org"),
         "registrar": get("registrar"),
@@ -153,7 +161,11 @@ def collect_from_domain(domain: str) -> List[EvidenceRecord]:
         set_cached_data(cache_key_ns, domain, info if info else {"error": "empty"})
 
     if not info or "error" in info:
-        logger.warning("RDAP/WHOIS lookup for %s failed: %s", domain, info.get("error") if info else "unknown")
+        logger.warning(
+            "RDAP/WHOIS lookup for %s failed: %s",
+            domain,
+            info.get("error") if info else "unknown",
+        )
         return []
 
     org_name = _normalize_org_name(info.get("org"))
