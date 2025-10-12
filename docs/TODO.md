@@ -26,3 +26,9 @@
 - xkcd - multiple repos with same user causes multiple evidences
 - bloom3 missing info from PKG-INFO  Home-page: http://www.iqianyue.com, Author Wei, etc
 - bloom - user has full name on pypi user page, doesn't display in markdown report
+
+## Spacy 
+
+- plays poorly with tox
+- plays poorly with uv
+- small vs large model?
