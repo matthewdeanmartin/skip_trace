@@ -8,6 +8,16 @@ Who owns your dependencies
 Of course all packages have a pypi user. The list of users isn't academic, you care about them because you want to
 communicate with them.
 
+[![tests](https://github.com/matthewdeanmartin/skip_trace/actions/workflows/build.yml/badge.svg)
+](https://github.com/matthewdeanmartin/skip_trace/actions/workflows/tests.yml)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/matthewdeanmartin/skip_trace/main.svg)
+](https://results.pre-commit.ci/latest/github/matthewdeanmartin/skip_trace/main)
+[![Downloads](https://img.shields.io/pypi/dm/skip-trace)](https://pypistats.org/packages/skip-trace)
+[![Python Version](https://img.shields.io/pypi/pyversions/skip-trace)
+![Release](https://img.shields.io/pypi/v/skip-trace)
+](https://pypi.org/project/skip-trace/)
+
+
 ## Installation
 
 **Requires**
@@ -56,3 +66,21 @@ If a package has take a good name but the user has published nothing to it, that
 ## Prior Art
 
 Nothing I could find.
+
+
+
+## Project Health & Info
+
+| Metric            | Health                                                                                                                                                                                                              | Metric          | Info                                                                                                                                                                                                          |
+|:------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:----------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Tests             | [![Tests](https://github.com/matthewdeanmartin/skip_trace/actions/workflows/build.yml/badge.svg)](https://github.com/matthewdeanmartin/skip_trace/actions/workflows/build.yml)                                  | License         | [![License](https://img.shields.io/github/license/matthewdeanmartin/skip_trace)](https://github.com/matthewdeanmartin/skip_trace/blob/main/LICENSE.md)                                                        |
+| Coverage          | [![Codecov](https://codecov.io/gh/matthewdeanmartin/skip_trace/branch/main/graph/badge.svg)](https://codecov.io/gh/matthewdeanmartin/skip_trace)                                                                | PyPI            | [![PyPI](https://img.shields.io/pypi/v/skip-trace)](https://pypi.org/project/skip-trace/)                                                                                                                     |
+| Lint / Pre-commit | [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/matthewdeanmartin/skip_trace/main.svg)](https://results.pre-commit.ci/latest/github/matthewdeanmartin/skip_trace/main)                      | Python Versions | [![Python Version](https://img.shields.io/pypi/pyversions/skip_trace)](https://pypi.org/project/skip_trace/)                                                                                                  |
+| Quality Gate      | [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=matthewdeanmartin_skip_trace\&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=matthewdeanmartin_skip_trace)    | Docs            | [![Docs](https://readthedocs.org/projects/skip_trace/badge/?version=latest)](https://skip_trace.readthedocs.io/en/latest/)                                                                                    |
+| CI Build          | [![Build](https://github.com/matthewdeanmartin/skip_trace/actions/workflows/build.yml/badge.svg)](https://github.com/matthewdeanmartin/skip_trace/actions/workflows/build.yml)                                  | Downloads       | [![Downloads](https://static.pepy.tech/personalized-badge/skip_trace?period=total\&units=international_system\&left_color=grey\&right_color=blue\&left_text=Downloads)](https://pepy.tech/project/skip_trace) |
+| Maintainability   | [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=matthewdeanmartin_skip_trace\&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=matthewdeanmartin_skip_trace) | Last Commit     | ![Last Commit](https://img.shields.io/github/last-commit/matthewdeanmartin/skip_trace)                                                                                                                        |
+
+| Category          | Health                                                                                                                                              
+|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Open Issues**   | ![GitHub issues](https://img.shields.io/github/issues/matthewdeanmartin/skip_trace)                                                               |
+| **Stars**         | ![GitHub Repo stars](https://img.shields.io/github/stars/matthewdeanmartin/skip_trace?style=social)                                               |
