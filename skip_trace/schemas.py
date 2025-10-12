@@ -48,7 +48,7 @@ class EvidenceSource(str, Enum):
     VENV_SCAN = "venv-scan"
     LLM_NER = "llm-ner"
     URL = "url"  # For evidence from scanned homepages
-    PYPI_ATTESTATION = "pypi-attestation" # New source
+    PYPI_ATTESTATION = "pypi-attestation"  # New source
 
 
 class EvidenceKind(str, Enum):

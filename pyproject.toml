@@ -22,7 +22,7 @@ classifiers = [
     "Operating System :: OS Independent",
     "Topic :: Security",
     "Topic :: Software Development :: Quality Assurance",
-    "Development Status :: 1 - Planning"
+    "Development Status :: 3 - Alpha"
 ]
 dependencies = [
     "httpx[http2]>=0.25.0",
@@ -35,7 +35,7 @@ dependencies = [
     "beautifulsoup4>=4.12.0", # Added for HTML scraping
     "PyGithub>=1.59.0", # NEW: For GitHub API interaction
     "openai>=1.3.0",
-    "sigstore>=1.0.0",
+    "sigstore>=1.0.0", # not used yet, may need to remove
     # "socials", is for regexing
     # custom domains
     "python-whois>=0.8.0",
@@ -73,6 +73,7 @@ dev = [
     "mypy; python_version >= '3.8'",
     "types-toml; python_version >= '3.8'",
     "types-jsonschema; python_version >= '3.8'",
+    "types-PyYAML",
     # reports
 
     # build

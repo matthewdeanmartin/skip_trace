@@ -99,8 +99,9 @@ def render(result: PackageResult, file: IO[str] = sys.stdout):
                 key_evidence_str,
             )
         console.print(owner_table)
-        console.print("[dim]Owners marked with 🛡️ are supported by cryptographic evidence.[/dim]")
-
+        console.print(
+            "[dim]Owners marked with 🛡️ are supported by cryptographic evidence.[/dim]"
+        )
 
     # --- CRYPTOGRAPHIC EVIDENCE (SIGSTORE) ---
     if sigstore_evidence:
@@ -125,7 +126,6 @@ def render(result: PackageResult, file: IO[str] = sys.stdout):
 
             sig_table.add_row(kind_str, primary_value, ev.notes)
         console.print(sig_table)
-
 
     # --- MAINTAINERS TABLE ---
     if result.maintainers:

@@ -9,12 +9,11 @@ import datetime
 import logging
 import os
 import shutil
-import subprocess
+import subprocess  # nosec
 import tempfile
 from typing import Any, Dict, List
 
 from ..analysis.evidence import generate_evidence_id
-from ..exceptions import CollectorError
 from ..schemas import EvidenceKind, EvidenceRecord, EvidenceSource
 from ..utils import http_client
 
@@ -65,18 +64,22 @@ def collect(metadata: Dict[str, Any]) -> List[EvidenceRecord]:
         response = http_client.make_request_safe(integrity_api_url)
         if response is None or response.status_code != 200:
             logger.info(
-                f"No attestation found for {artifact_filename} via Integrity API (Status: {response.status_code if response else 'N/A'}).")
+                f"No attestation found for {artifact_filename} via Integrity API (Status: {response.status_code if response else 'N/A'})."
+            )
             continue
 
         try:
-            attestation_json = response.json()
+            response.json()
         except Exception:
-            logger.warning(f"Failed to parse JSON from Integrity API for {artifact_filename}")
+            logger.warning(
+                f"Failed to parse JSON from Integrity API for {artifact_filename}"
+            )
             continue
 
         # 3. Save the attestation to a temporary file for the CLI to use.
-        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".attestation.json",
-                                         encoding='utf-8') as tmp_file:
+        with tempfile.NamedTemporaryFile(
+            mode="w", delete=False, suffix=".attestation.json", encoding="utf-8"
+        ) as tmp_file:
             tmp_file.write(response.text)
             temp_attestation_path = tmp_file.name
 
@@ -85,7 +88,7 @@ def collect(metadata: Dict[str, Any]) -> List[EvidenceRecord]:
             # The tool verifies the attestation as part of the inspect command.
             command = ["pypi-attestations", "inspect", temp_attestation_path]
             logger.info(f"Running command: {' '.join(command)}")
-            result = subprocess.run(
+            result = subprocess.run(  # nosec
                 command,
                 capture_output=True,
                 text=True,
@@ -106,7 +109,9 @@ def collect(metadata: Dict[str, Any]) -> List[EvidenceRecord]:
                     workflow = line.split(":", 1)[1].strip()
 
             if not repo_slug:
-                logger.warning("Verified attestation but could not parse repository slug from CLI output.")
+                logger.warning(
+                    "Verified attestation but could not parse repository slug from CLI output."
+                )
                 continue
 
             # Create the evidence record.

@@ -2466,6 +2466,7 @@ dependencies = [
     { name = "pygithub" },
     { name = "python-dotenv" },
     { name = "python-whois" },
+    { name = "pyyaml" },
     { name = "rich" },
     { name = "rich-argparse" },
     { name = "sigstore" },
@@ -2511,6 +2512,7 @@ dev = [
     { name = "strip-docs" },
     { name = "troml-dev-status" },
     { name = "types-jsonschema" },
+    { name = "types-pyyaml" },
     { name = "types-toml" },
     { name = "vermin" },
 ]
@@ -2527,6 +2529,7 @@ requires-dist = [
     { name = "python-dotenv" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "python-whois", specifier = ">=0.8.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
     { name = "rich", specifier = ">=13.0.0" },
     { name = "rich-argparse" },
     { name = "sigstore", specifier = ">=1.0.0" },
@@ -2575,6 +2578,7 @@ dev = [
     { name = "strip-docs", marker = "python_full_version >= '3.12'", specifier = ">=1.0" },
     { name = "troml-dev-status", marker = "python_full_version >= '3.9'", specifier = ">=0.4.1" },
     { name = "types-jsonschema", marker = "python_full_version >= '3.8'" },
+    { name = "types-pyyaml" },
     { name = "types-toml", marker = "python_full_version >= '3.8'" },
     { name = "vermin", marker = "python_full_version >= '3.8'" },
 ]
@@ -2896,6 +2900,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ef/da/5b901088da5f710690b422137e8ae74197fb1ca471e4aa84dd3ef0d6e295/types_jsonschema-4.25.1.20251009.tar.gz", hash = "sha256:75d0f5c5dd18dc23b664437a0c1a625743e8d2e665ceaf3aecb29841f3a5f97f", size = 15661, upload-time = "2025-10-09T02:54:36.963Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7f/6a/e5146754c0dfc272f176db9c245bc43cc19030262d891a5a85d472797e60/types_jsonschema-4.25.1.20251009-py3-none-any.whl", hash = "sha256:f30b329037b78e7a60146b1146feb0b6fb0b71628637584409bada83968dad3e", size = 15925, upload-time = "2025-10-09T02:54:35.847Z" },
+]
+
+[[package]]
+name = "types-pyyaml"
+version = "6.0.12.20250915"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/7e/69/3c51b36d04da19b92f9e815be12753125bd8bc247ba0470a982e6979e71c/types_pyyaml-6.0.12.20250915.tar.gz", hash = "sha256:0f8b54a528c303f0e6f7165687dd33fafa81c807fcac23f632b63aa624ced1d3", size = 17522, upload-time = "2025-09-15T03:01:00.728Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bd/e0/1eed384f02555dde685fff1a1ac805c1c7dcb6dd019c916fe659b1c1f9ec/types_pyyaml-6.0.12.20250915-py3-none-any.whl", hash = "sha256:e7d4d9e064e89a3b3cae120b4990cd370874d2bf12fa5f46c97018dd5d3c9ab6", size = 20338, upload-time = "2025-09-15T03:00:59.218Z" },
 ]
 
 [[package]]

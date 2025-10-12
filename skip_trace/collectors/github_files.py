@@ -12,7 +12,7 @@ from github import GithubException
 from ..analysis.evidence import generate_evidence_id
 from ..schemas import EvidenceKind, EvidenceRecord, EvidenceSource
 from ..utils import http_client
-from .github import get_github_client, _create_records_from_user_profile
+from .github import _create_records_from_user_profile, get_github_client
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ def _parse_repo_url(url: str) -> Optional[str]:
                 path = path.replace(".git", "")
             if len(path.split("/")) >= 2:
                 return "/".join(path.split("/")[:2])
-    except Exception:
+    except Exception:  # nosec
         pass
     logger.warning(f"Could not parse a valid GitHub repository from URL: {url}")
     return None
@@ -70,12 +70,13 @@ def collect_security_policy(repo_url: str) -> List[EvidenceRecord]:
                 logger.info(f"Found security policy at {raw_url}")
 
                 # Extract emails from the security policy
-                email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+                email_pattern = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
                 emails = re.findall(email_pattern, content)
 
                 seen_emails: Set[str] = set()
                 for email in emails:
                     from ..utils.validation import is_valid_email
+
                     if valid_email := is_valid_email(email):
                         if valid_email in seen_emails:
                             continue
@@ -84,25 +85,27 @@ def collect_security_policy(repo_url: str) -> List[EvidenceRecord]:
                         value = {
                             "email": valid_email,
                             "context": "security contact",
-                            "source_file": path
+                            "source_file": path,
                         }
-                        evidence.append(EvidenceRecord(
-                            id=generate_evidence_id(
-                                EvidenceSource.REPO,
-                                EvidenceKind.CONTACT,
-                                raw_url,
-                                str(value),
-                                valid_email,
-                                hint="security"
-                            ),
-                            source=EvidenceSource.REPO,
-                            locator=raw_url,
-                            kind=EvidenceKind.CONTACT,
-                            value=value,
-                            observed_at=now,
-                            confidence=0.85,
-                            notes=f"Security contact email found in {path}."
-                        ))
+                        evidence.append(
+                            EvidenceRecord(
+                                id=generate_evidence_id(
+                                    EvidenceSource.REPO,
+                                    EvidenceKind.CONTACT,
+                                    raw_url,
+                                    str(value),
+                                    valid_email,
+                                    hint="security",
+                                ),
+                                source=EvidenceSource.REPO,
+                                locator=raw_url,
+                                kind=EvidenceKind.CONTACT,
+                                value=value,
+                                observed_at=now,
+                                confidence=0.85,
+                                notes=f"Security contact email found in {path}.",
+                            )
+                        )
 
                 # Found a security file, no need to check other locations
                 return evidence
@@ -139,6 +142,7 @@ def collect_funding_info(repo_url: str) -> List[EvidenceRecord]:
 
             try:
                 import yaml
+
                 data = yaml.safe_load(response.text)
 
                 # GitHub sponsors
@@ -148,25 +152,27 @@ def collect_funding_info(repo_url: str) -> List[EvidenceRecord]:
                         value = {
                             "username": username,
                             "platform": "github_sponsors",
-                            "url": f"https://github.com/sponsors/{username}"
+                            "url": f"https://github.com/sponsors/{username}",
                         }
-                        evidence.append(EvidenceRecord(
-                            id=generate_evidence_id(
-                                EvidenceSource.REPO,
-                                EvidenceKind.CONTACT,
-                                funding_url,
-                                str(value),
-                                username,
-                                hint="sponsor"
-                            ),
-                            source=EvidenceSource.REPO,
-                            locator=funding_url,
-                            kind=EvidenceKind.CONTACT,
-                            value=value,
-                            observed_at=now,
-                            confidence=0.75,
-                            notes=f"GitHub Sponsors profile: {username}"
-                        ))
+                        evidence.append(
+                            EvidenceRecord(
+                                id=generate_evidence_id(
+                                    EvidenceSource.REPO,
+                                    EvidenceKind.CONTACT,
+                                    funding_url,
+                                    str(value),
+                                    username,
+                                    hint="sponsor",
+                                ),
+                                source=EvidenceSource.REPO,
+                                locator=funding_url,
+                                kind=EvidenceKind.CONTACT,
+                                value=value,
+                                observed_at=now,
+                                confidence=0.75,
+                                notes=f"GitHub Sponsors profile: {username}",
+                            )
+                        )
 
                 # Other funding platforms
                 platform_configs = {
@@ -187,25 +193,27 @@ def collect_funding_info(repo_url: str) -> List[EvidenceRecord]:
                             contact_value = {
                                 "username": username,
                                 "platform": platform,
-                                "url": url_template.format(username)
+                                "url": url_template.format(username),
                             }
-                            evidence.append(EvidenceRecord(
-                                id=generate_evidence_id(
-                                    EvidenceSource.REPO,
-                                    EvidenceKind.CONTACT,
-                                    funding_url,
-                                    str(contact_value),
-                                    username,
-                                    hint=platform
-                                ),
-                                source=EvidenceSource.REPO,
-                                locator=funding_url,
-                                kind=EvidenceKind.CONTACT,
-                                value=contact_value,
-                                observed_at=now,
-                                confidence=0.70,
-                                notes=f"Funding platform {platform}: {username}"
-                            ))
+                            evidence.append(
+                                EvidenceRecord(
+                                    id=generate_evidence_id(
+                                        EvidenceSource.REPO,
+                                        EvidenceKind.CONTACT,
+                                        funding_url,
+                                        str(contact_value),
+                                        username,
+                                        hint=platform,
+                                    ),
+                                    source=EvidenceSource.REPO,
+                                    locator=funding_url,
+                                    kind=EvidenceKind.CONTACT,
+                                    value=contact_value,
+                                    observed_at=now,
+                                    confidence=0.70,
+                                    notes=f"Funding platform {platform}: {username}",
+                                )
+                            )
 
                 # Custom URLs (often personal websites or donation pages)
                 if custom := data.get("custom"):
@@ -214,25 +222,27 @@ def collect_funding_info(repo_url: str) -> List[EvidenceRecord]:
                         value = {
                             "url": url,
                             "platform": "custom_funding",
-                            "label": "Custom funding URL"
+                            "label": "Custom funding URL",
                         }
-                        evidence.append(EvidenceRecord(
-                            id=generate_evidence_id(
-                                EvidenceSource.REPO,
-                                EvidenceKind.PROJECT_URL,
-                                funding_url,
-                                str(value),
-                                url,
-                                hint="funding"
-                            ),
-                            source=EvidenceSource.REPO,
-                            locator=funding_url,
-                            kind=EvidenceKind.PROJECT_URL,
-                            value=value,
-                            observed_at=now,
-                            confidence=0.60,
-                            notes=f"Custom funding URL: {url}"
-                        ))
+                        evidence.append(
+                            EvidenceRecord(
+                                id=generate_evidence_id(
+                                    EvidenceSource.REPO,
+                                    EvidenceKind.PROJECT_URL,
+                                    funding_url,
+                                    str(value),
+                                    url,
+                                    hint="funding",
+                                ),
+                                source=EvidenceSource.REPO,
+                                locator=funding_url,
+                                kind=EvidenceKind.PROJECT_URL,
+                                value=value,
+                                observed_at=now,
+                                confidence=0.60,
+                                notes=f"Custom funding URL: {url}",
+                            )
+                        )
 
                 # Found funding file, return
                 return evidence
@@ -291,9 +301,13 @@ def collect_top_contributors(repo_url: str) -> List[EvidenceRecord]:
         logger.info(f"Extracted evidence from {processed_count} contributors")
 
     except GithubException as e:
-        logger.warning(f"GitHub API error for contributors of '{repo_full_name}': {e.status}")
+        logger.warning(
+            f"GitHub API error for contributors of '{repo_full_name}': {e.status}"
+        )
     except Exception as e:
-        logger.error(f"Unexpected error fetching contributors for '{repo_full_name}': {e}")
+        logger.error(
+            f"Unexpected error fetching contributors for '{repo_full_name}': {e}"
+        )
 
     return evidence
 

@@ -15,7 +15,15 @@ from rich.logging import RichHandler
 from . import schemas
 from .analysis import evidence as evidence_analyzer
 from .analysis import scoring
-from .collectors import github, github_files, package_files, pypi, urls, whois, pypi_attestations
+from .collectors import (
+    github,
+    github_files,
+    package_files,
+    pypi,
+    pypi_attestations,
+    urls,
+    whois,
+)
 from .config import CONFIG
 from .exceptions import CollectorError, NetworkError, NoEvidenceError
 from .reporting import json_reporter, md_reporter
@@ -86,8 +94,8 @@ def run_who_owns(args: argparse.Namespace) -> int:
         repo_urls = set()
         for record in evidence_records:
             if (
-                    record.source == schemas.EvidenceSource.PYPI
-                    and record.kind == schemas.EvidenceKind.ORGANIZATION
+                record.source == schemas.EvidenceSource.PYPI
+                and record.kind == schemas.EvidenceKind.ORGANIZATION
             ):
                 url = record.value.get("url")
                 if url and "github.com" in url:

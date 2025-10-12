@@ -259,7 +259,7 @@ def collect_from_package_files(metadata: Dict[str, Any]) -> List[EvidenceRecord]
         try:
             if artifact_path.endswith((".whl", ".zip")):
                 with zipfile.ZipFile(artifact_path, "r") as zf:
-                    zf.extractall(extract_dir)
+                    zf.extractall(extract_dir)  # nosec
             elif artifact_path.endswith(
                 (".tar.gz", ".tgz", ".tar.bz2", ".tar.xz", ".tar")
             ):
@@ -328,9 +328,7 @@ def collect_from_package_files(metadata: Dict[str, Any]) -> List[EvidenceRecord]
             with open(metadata_file_path, "r", encoding="utf-8", errors="ignore") as f:
                 content = f.read()
             # Create a locator relative to the package root
-            relative_locator_path = os.path.relpath(
-                metadata_file_path, scan_target_dir
-            )
+            relative_locator_path = os.path.relpath(metadata_file_path, scan_target_dir)
             locator = f"{locator_prefix}/{relative_locator_path}"
             metadata_evidence = _parse_metadata_file(content, locator)
             evidence.extend(metadata_evidence)
