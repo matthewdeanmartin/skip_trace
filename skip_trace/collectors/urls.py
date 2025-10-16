@@ -84,12 +84,34 @@ def collect_from_urls(urls: Set[str]) -> List[EvidenceRecord]:
 
         if content:
             try:
+                # Scan page content for non-URL evidence like copyright and emails.
                 soup = BeautifulSoup(content, "html.parser")
                 text_content = soup.get_text(separator=" ", strip=True)
-                url_evidence = scan_text(text_content, url, EvidenceSource.URL)
-                if url_evidence:
-                    logger.info(f"Found {len(url_evidence)} evidence records on {url}")
-                    all_evidence.extend(url_evidence)
+
+                claim_evidence = scan_text(text_content, url, EvidenceSource.URL)
+
+                if claim_evidence:
+                    found_count = len(claim_evidence)
+                    logger.info(f"Found {found_count} evidence records on {url}")
+                    all_evidence.extend(claim_evidence)
+
+                # # 1. Scan for non-URL claims (copyrights, emails) from plain text
+                # soup = BeautifulSoup(content, "html.parser")
+                # text_content = soup.get_text(separator=" ", strip=True)
+                # # Scan for claims (copyrights, emails)
+                # claim_evidence = scan_text(text_content, url, EvidenceSource.URL)
+                # all_evidence.extend(claim_evidence)
+                # # Scan for more URLs
+                #
+                # # 2. Use the new, smarter URL scanner for HTML content
+                # url_evidence = url_scanner.scan_text_for_urls(
+                #     content, url, EvidenceSource.URL, file_type='html'
+                # )
+                # all_evidence.extend(url_evidence)
+                #
+                # found_count = len(claim_evidence) + len(url_evidence)
+                # if found_count > 0:
+                #     logger.info(f"Found {found_count} evidence records on {url}")
             except Exception as e:
                 logger.warning(f"Could not parse or scan HTML from {url}: {e}")
 

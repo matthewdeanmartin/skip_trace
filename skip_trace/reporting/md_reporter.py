@@ -158,7 +158,7 @@ def render(result: PackageResult, file: IO[str] = sys.stdout):
         url_table = Table(
             show_header=True, header_style="bold blue", title="Checked URLs"
         )
-        url_table.add_column("URL", style="cyan", no_wrap=True)
+        url_table.add_column("URL", style="cyan", no_wrap=True, max_width=100)
         url_table.add_column("HTTP Status", justify="center")
 
         for ev in sorted(url_status_evidence, key=lambda x: x.locator):
@@ -175,5 +175,47 @@ def render(result: PackageResult, file: IO[str] = sys.stdout):
                 style = "red"
             url_table.add_row(ev.locator, f"[{style}]{status_str}[/]")
         console.print(url_table)
+
+    # --- NEW: BACKLINK ANALYSIS TABLE ---
+    backlink_evidence = [
+        ev for ev in result.evidence if ev.source == EvidenceSource.BACKLINKS
+    ]
+    console.print("\n[bold]## ✅ Claim Verification via Backlinks[/bold]")
+    if backlink_evidence:
+        console.print(
+            "[dim]This table shows external project URLs that have been verified "
+            "because they link back to the official PyPI page.[/dim]"
+        )
+        backlink_table = Table(
+            show_header=True,
+            header_style="bold green",
+            title="Verified Project URL Claims",
+            title_style="bold",
+            show_lines=True,
+        )
+        backlink_table.add_column("Claimed Project URL", style="cyan", max_width=60)
+        backlink_table.add_column("Source of Claim", style="white", max_width=50)
+        backlink_table.add_column("Verification", style="bold green", max_width=60)
+
+        for ev in backlink_evidence:
+            value = ev.value
+            origin_note = value.get("claimed_url_origin", "N/A").split(": ", 1)[-1]
+            verified_target = value.get("verified_by_linking_to", "N/A")
+
+            verification_text = (
+                f"✅ [bold green]Verified[/bold green]\n"
+                f"Links back to [cyan]{verified_target}[/cyan]"
+            )
+
+            backlink_table.add_row(
+                value.get("claimed_url", "[unknown]"),
+                origin_note,
+                verification_text,
+            )
+        console.print(backlink_table)
+    else:
+        console.print(
+            "No external project URLs could be verified by linking back to PyPI."
+        )
 
     console.print("-" * 80)

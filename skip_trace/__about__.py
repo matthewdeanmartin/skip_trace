@@ -19,7 +19,7 @@ __readme__ = "README.md"
 __license__ = "MIT"
 __credits__ = [{"name": "Matthew Dean Martin", "email": "matthewdeanmartin@gmail.com"}]
 __requires_python__ = ">=3.13"
-__status__ = "1 - Planning"
+__status__ = "3 - Alpha"
 __keywords__ = [
     "PyPI maintainers",
     "package owners",

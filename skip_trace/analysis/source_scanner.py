@@ -27,6 +27,8 @@ AUTHOR_RE = re.compile(r"__author__\s*=\s*['\"]([^'\"]+)['\"]")
 # Regex for finding standalone email addresses - used as a fast pre-filter
 EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b")
 
+# --- URL scanning has been moved to analysis/url_scanner.py ---
+
 # Words that indicate a regex grabbed junk from a license instead of a name.
 # This filter now lives in the scanner, where the bad evidence is generated.
 JUNK_WORDS = {
@@ -166,6 +168,65 @@ def _process_authors_file(
     return evidence_list
 
 
+skip_dirs = {
+    ".git",
+    "__pycache__",
+    ".idea",
+    ".vscode",
+    "dist",
+    "build",
+    ".egg-info",
+    "node_modules",
+}
+# More comprehensive list of binary extensions
+skip_extensions = {
+    ".pyc",
+    ".pyo",
+    ".so",
+    ".pyd",
+    ".egg",
+    ".whl",  # Python
+    ".o",
+    ".a",
+    ".dll",
+    ".exe",  # Compiled
+    ".svg",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".ico",
+    ".webp",  # Images
+    ".woff",
+    ".woff2",
+    ".ttf",
+    ".eot",
+    ".otf",  # Fonts
+    ".zip",
+    ".tar",
+    ".gz",
+    ".bz2",
+    ".7z",
+    ".rar",  # Archives
+    ".pdf",
+    ".doc",
+    ".docx",
+    ".xls",
+    ".xlsx",
+    ".ppt",
+    ".pptx",
+    ".odt",  # Docs
+    ".mp3",
+    ".mp4",
+    ".wav",
+    ".flac",
+    ".ogg",
+    ".mov",
+    ".avi",
+    ".mkv",  # Media
+}
+
+
 def scan_directory(directory_path: str, locator_prefix: str) -> List[EvidenceRecord]:
     """
     Scans a directory of files for ownership evidence.
@@ -179,64 +240,6 @@ def scan_directory(directory_path: str, locator_prefix: str) -> List[EvidenceRec
     """
     evidence_list: List[EvidenceRecord] = []
     now = datetime.datetime.now(datetime.timezone.utc)
-
-    skip_dirs = {
-        ".git",
-        "__pycache__",
-        ".idea",
-        ".vscode",
-        "dist",
-        "build",
-        ".egg-info",
-        "node_modules",
-    }
-    # More comprehensive list of binary extensions
-    skip_extensions = {
-        ".pyc",
-        ".pyo",
-        ".so",
-        ".pyd",
-        ".egg",
-        ".whl",  # Python
-        ".o",
-        ".a",
-        ".dll",
-        ".exe",  # Compiled
-        ".svg",
-        ".png",
-        ".jpg",
-        ".jpeg",
-        ".gif",
-        ".ico",
-        ".webp",  # Images
-        ".woff",
-        ".woff2",
-        ".ttf",
-        ".eot",
-        ".otf",  # Fonts
-        ".zip",
-        ".tar",
-        ".gz",
-        ".bz2",
-        ".7z",
-        ".rar",  # Archives
-        ".pdf",
-        ".doc",
-        ".docx",
-        ".xls",
-        ".xlsx",
-        ".ppt",
-        ".pptx",
-        ".odt",  # Docs
-        ".mp3",
-        ".mp4",
-        ".wav",
-        ".flac",
-        ".ogg",
-        ".mov",
-        ".avi",
-        ".mkv",  # Media
-    }
 
     file_count = 0
     for root, dirs, files in os.walk(directory_path):

@@ -61,13 +61,45 @@ See [PEP 541](https://peps.python.org/pep-0541/) for exact text
 
 ## Name Squatting
 
-If a package has take a good name but the user has published nothing to it, that is Name Squatting
+If a package has take a good name but the user has published nothing to it, that is Name Squatting.
+
+Also, if the name is similar to another and is malicious. 
+
+## Account Ownership Evolution
+
+Did the person who uploaded the 1st package upload the next? Hard question, don't think this tool helps.
+
+Is this a fork? You'll see a mix of identities, from the new publisher and the old.
+
+## Uncoordinated Back Link Logic
+
+There is a `<a rel="me" href="..."/>` syntax and unless a website lets you add that `rel` or if you have a custom
+domain website that you control 100%, you can't use a lot of websites for a `rel` backlink.
+
+If a link on pypi goes outbound to a site that has a link right back to the same page in pypi then
+
+- The same person controls both, e.g. bio section of linkedin/twitter/mastodon.
+  - You can use your trust in linkedin to know that John Doe 
+- The other side is a custom domain home page.
+- The other site has arbitrary user content, like blog comments.
+- The other site is an index or mirror or search engine.
+
+Attack scenario
+- The other site is to a 3rd party, but the 3rd party added a link backwards
+  - E.g. pypi readme references a blog post (friend reference, not a "me" reference), the author of it then adds a backlink, now it looks like a "me" reference. 
+
+Mitigations
+
+- Someone would have to look at uncoordinated links and decide if each one indicated, "This link is to my identity" 
+
+- Link on pypi (in metadata )
+  - Source control site. Good sign, might even have some cryptographic evidence.
+  - Library info site. Doesn't mean much.
+  - Documentation site. Means author controls both sites. Useful for tracking account ownership evolution/forking.
 
 ## Prior Art
 
 Nothing I could find.
-
-
 
 ## Project Health & Info
 

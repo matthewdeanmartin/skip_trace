@@ -22,11 +22,6 @@ AUTHOR_RE = re.compile(r"__author__\s*=\s*['\"]([^'\"]+)['\"]")
 # Regex for finding standalone email addresses - used as a fast pre-filter
 EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b")
 
-# --- Regex for finding URLs in text content ---
-URL_RE = re.compile(
-    r"""\b(?:https?://|www\.)[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+(?:[/?#]\S*)?"""
-)
-
 # Words that indicate a regex grabbed junk from a license instead of a name.
 JUNK_WORDS = {
     "copyright",
@@ -67,7 +62,7 @@ def scan_text(
     content: str, locator: str, source: EvidenceSource, is_python_file: bool = False
 ) -> List[EvidenceRecord]:
     """
-    Scans a string of text content for ownership evidence.
+    Scans a string of text content for ownership evidence (excluding URLs).
 
     Args:
         content: The text content to scan.
@@ -159,31 +154,5 @@ def scan_text(
                 notes=f"Found validated contact email '{valid_email}' in '{locator}'.",
             )
             evidence_list.append(record)
-
-    # 4. Scan for any URLs
-    for match in URL_RE.finditer(content):
-        url = match.group(0)
-        if ("url", url) in found_in_scan:
-            continue
-        found_in_scan.add(("url", url))
-        value = {"label": "URL found in content", "url": url}
-        record = EvidenceRecord(
-            id=generate_evidence_id(
-                source,
-                EvidenceKind.PROJECT_URL,
-                locator,
-                str(value),
-                url,
-                hint="content-scan",
-            ),
-            source=source,
-            locator=locator,
-            kind=EvidenceKind.PROJECT_URL,
-            value=value,
-            observed_at=now,
-            confidence=0.10,
-            notes=f"Found URL '{url}' in '{locator}'.",
-        )
-        evidence_list.append(record)
 
     return evidence_list

@@ -11,6 +11,7 @@ import zipfile
 from email.parser import Parser
 from typing import Any, Dict, List, Optional
 
+from ..analysis import url_scanner  # <-- IMPORT THE NEW URL SCANNER
 from ..analysis import source_scanner
 from ..analysis.evidence import generate_evidence_id
 from ..exceptions import CollectorError, NetworkError
@@ -294,10 +295,17 @@ def collect_from_package_files(metadata: Dict[str, Any]) -> List[EvidenceRecord]
             return evidence
 
     locator_prefix = f"{package_name}-{package_version}"
+    # --- Scan for standard claims (copyright, authors, etc.) ---
     source_scan_evidence = source_scanner.scan_directory(
         scan_target_dir, locator_prefix
     )
     evidence.extend(source_scan_evidence)
+
+    # --- NEW: Scan separately for URLs ---
+    url_scan_evidence = url_scanner.scan_directory_for_urls(
+        scan_target_dir, locator_prefix
+    )
+    evidence.extend(url_scan_evidence)
 
     # --- Scan for PKG-INFO/METADATA file ---
     metadata_file_path = None

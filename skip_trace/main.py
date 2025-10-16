@@ -13,6 +13,7 @@ import tldextract
 from rich.logging import RichHandler
 
 from . import schemas
+from .analysis import backlinks  # Import the new module
 from .analysis import evidence as evidence_analyzer
 from .analysis import scoring
 from .collectors import (
@@ -178,6 +179,30 @@ def run_who_owns(args: argparse.Namespace) -> int:
                 )
             except CollectorError as e:
                 logger.warning(f"URL scanning failed: {e}")
+
+        # --- NEW: Post-analysis backlink step ---
+        logger.info("Starting backlink analysis phase.")
+        all_url_map = backlinks.gather_urls_from_evidence(evidence_records)
+
+        # --- NEW LOGIC: Separate trusted anchors from candidate URLs ---
+        pypi_project_url = f"https://pypi.org/project/{package_name}/"
+        trusted_anchor_urls: Set[str] = {pypi_project_url}
+
+        # Candidates are all URLs that are not the trusted anchor itself
+        candidate_urls = {
+            url: record
+            for url, record in all_url_map.items()
+            if url not in trusted_anchor_urls
+        }
+
+        backlink_evidence = backlinks.analyze_backlinks(
+            candidate_urls, trusted_anchor_urls
+        )
+        if backlink_evidence:
+            evidence_records.extend(backlink_evidence)
+            logger.info(
+                f"Added {len(backlink_evidence)} new evidence records from backlink analysis."
+            )
 
         # Score all collected evidence
         owner_candidates = scoring.score_owners(evidence_records)

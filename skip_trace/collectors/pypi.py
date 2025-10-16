@@ -88,7 +88,7 @@ def _fetch_other_package_urls(user_profile_url: str) -> Set[str]:
 def cross_reference_by_user(package_name: str) -> List[EvidenceRecord]:
     """
     Finds other packages by the same user to uncover more evidence.
-    Also creates an evidence record for the PyPI user itself.
+    Also creates an evidence record for the PyPI user itself and key PyPI URLs.
 
     Args:
         package_name: The name of the starting package.
@@ -97,31 +97,80 @@ def cross_reference_by_user(package_name: str) -> List[EvidenceRecord]:
         A list of new EvidenceRecord objects found from related packages.
     """
     new_evidence: List[EvidenceRecord] = []
+    now = datetime.datetime.now(datetime.timezone.utc)
+    project_page_url = f"{PYPI_PROJECT_URL}/{package_name}/"
+
+    # --- NEW: Always add the PyPI project page itself as a URL to scan ---
+    project_page_value = {"label": "PyPI Project Page", "url": project_page_url}
+    new_evidence.append(
+        EvidenceRecord(
+            id=generate_evidence_id(
+                EvidenceSource.PYPI,
+                EvidenceKind.PROJECT_URL,
+                project_page_url,
+                str(project_page_value),
+                package_name,
+                hint="project-page",
+            ),
+            source=EvidenceSource.PYPI,
+            locator=project_page_url,
+            kind=EvidenceKind.PROJECT_URL,
+            value=project_page_value,
+            observed_at=now,
+            confidence=0.1,  # Informational, not for direct scoring
+            notes=f"The canonical PyPI project page for '{package_name}'.",
+        )
+    )
+
     profile_url = _scrape_user_profile_url(package_name)
 
     # --- Always create evidence for the PyPI user if found ---
     if profile_url:
         try:
             username = profile_url.strip("/").rsplit("/", maxsplit=1)[-1]
-            value = {"name": username, "url": profile_url}
-            record = EvidenceRecord(
-                id=generate_evidence_id(
-                    EvidenceSource.PYPI,
-                    EvidenceKind.PYPI_USER,
-                    profile_url,
-                    str(value),
-                    username,
-                ),
-                source=EvidenceSource.PYPI,
-                locator=profile_url,
-                kind=EvidenceKind.PYPI_USER,
-                value=value,
-                observed_at=datetime.datetime.now(datetime.timezone.utc),
-                confidence=0.50,  # This is a strong signal
-                notes=f"Package is published by PyPI user '{username}'.",
+            user_value = {"name": username, "url": profile_url}
+            new_evidence.append(
+                EvidenceRecord(
+                    id=generate_evidence_id(
+                        EvidenceSource.PYPI,
+                        EvidenceKind.PYPI_USER,
+                        profile_url,
+                        str(user_value),
+                        username,
+                    ),
+                    source=EvidenceSource.PYPI,
+                    locator=profile_url,
+                    kind=EvidenceKind.PYPI_USER,
+                    value=user_value,
+                    observed_at=now,
+                    confidence=0.50,
+                    notes=f"Package is published by PyPI user '{username}'.",
+                )
             )
-            new_evidence.append(record)
             logger.debug(f"Created evidence record for PyPI user '{username}'.")
+
+            # --- NEW: Also add the user profile page as a URL to scan ---
+            user_page_value = {"label": "PyPI User Page", "url": profile_url}
+            new_evidence.append(
+                EvidenceRecord(
+                    id=generate_evidence_id(
+                        EvidenceSource.PYPI,
+                        EvidenceKind.PROJECT_URL,
+                        profile_url,
+                        str(user_page_value),
+                        username,
+                        hint="user-page",
+                    ),
+                    source=EvidenceSource.PYPI,
+                    locator=profile_url,
+                    kind=EvidenceKind.PROJECT_URL,
+                    value=user_page_value,
+                    observed_at=now,
+                    confidence=0.1,  # Informational
+                    notes=f"The PyPI user profile page for '{username}'.",
+                )
+            )
+
         except (IndexError, TypeError) as e:
             logger.warning(
                 f"Could not parse username from profile URL '{profile_url}': {e}"
@@ -129,7 +178,7 @@ def cross_reference_by_user(package_name: str) -> List[EvidenceRecord]:
 
     # --- Continue with existing cross-referencing logic ---
     if not profile_url:
-        return []
+        return new_evidence  # Return just the project page URL evidence
 
     other_packages = _fetch_other_package_urls(profile_url)
     if not other_packages:

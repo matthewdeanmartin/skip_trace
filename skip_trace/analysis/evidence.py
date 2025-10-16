@@ -8,6 +8,7 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 import tldextract
+from bs4 import BeautifulSoup  # Added import
 
 from ..schemas import EvidenceKind, EvidenceRecord, EvidenceSource, Maintainer
 from ..utils.validation import is_valid_email
@@ -305,6 +306,36 @@ def extract_from_pypi(
                             already_in = True
                     if not already_in:
                         evidence_list.append(record)
+
+    # --- NEW: Parse Long Description for a primary URL ---
+    description = info.get("description", "")
+    if description and isinstance(description, str):
+        try:
+            soup = BeautifulSoup(description, "html.parser")
+            first_link = soup.find("a", href=True)
+            if first_link and first_link["href"]:
+                url = first_link["href"]
+                value = {"label": "Link from Description", "url": url}
+                record = EvidenceRecord(
+                    id=generate_evidence_id(
+                        EvidenceSource.PYPI,
+                        EvidenceKind.PROJECT_URL,
+                        locator,
+                        str(value),
+                        "description-link",
+                    ),
+                    source=EvidenceSource.PYPI,
+                    locator=locator,
+                    kind=EvidenceKind.PROJECT_URL,
+                    value=value,
+                    observed_at=now,
+                    confidence=0.30,
+                    notes=f"Found primary link '{url}' in package long description.",
+                )
+                evidence_list.append(record)
+                logger.debug(f"Found URL in long description: {url}")
+        except Exception as e:
+            logger.warning(f"Could not parse package description HTML: {e}")
 
     logger.info(
         f"Extracted {len(evidence_list)} evidence records and {len(maintainer_list)} maintainers from PyPI."

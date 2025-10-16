@@ -86,6 +86,25 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "codeberg",
         "pypi",  # PSF owns PyPI, but not the packages on it
     ],
+    # --- NEW: Backlink Analysis Configuration ---
+    "backlinks": {
+        "ownership_control_domains": [
+            "github.io",  # Personal or project pages
+            # Add personal blog domains or company sites known to be strong signals
+            "example-blog.com",
+            "mycompany.com",
+        ],
+        "non_ownership_domains": [
+            "pastebin.com",
+            "gist.github.com",
+            "jsfiddle.net",
+            "codepen.io",
+            "stackoverflow.com",
+            "stackexchange.com",
+            "medium.com",  # Usually indicates authorship, not project ownership
+        ],
+        # Neutral domains (like twitter, linkedin) are not listed; they are the default
+    },
 }
 
 

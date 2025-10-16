@@ -53,3 +53,12 @@
 - pypi only deals in attestations?
 - attestation url only shows a few claims? e.g. the github repo identity?
 - How does pypi show "verified claims"? vs self asserted?
+
+## Very slow
+
+- skip-trace who-owns murmurhash  -- spends lots of time on attestations
+
+### NNER bug
+
+❯ skip-trace who-owns django-adminlte3-amigne
+An unexpected error occurred: [E088] Text of length 2349273 exceeds maximum of 1000000. The parser and NER models require roughly 1GB of temporary memory per 100,000 characters in the input. This means long texts may cause memory allocation errors. If you're not using the parser or NER, it's probably safe to increase the `nlp.max_length` limit. The limit is in number of characters, so you can check whether your inputs are too long by checking `len(text)`.

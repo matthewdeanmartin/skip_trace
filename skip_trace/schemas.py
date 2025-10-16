@@ -49,6 +49,7 @@ class EvidenceSource(str, Enum):
     LLM_NER = "llm-ner"
     URL = "url"  # For evidence from scanned homepages
     PYPI_ATTESTATION = "pypi-attestation"  # New source
+    BACKLINKS = "backlinks"  # New kind
 
 
 class EvidenceKind(str, Enum):
@@ -77,6 +78,7 @@ class EvidenceKind(str, Enum):
     SIGSTORE_BUILD_PROVENANCE = "sigstore-build-provenance"
     # PyPI Attestation-specific evidence kind
     PYPI_PUBLISHER_ATTESTATION = "pypi-publisher-attestation"
+    BACKLINK = "backlink"  # New kind
 
 
 # --- Core Data Schemas ---
