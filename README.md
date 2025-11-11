@@ -97,6 +97,24 @@ Mitigations
   - Library info site. Doesn't mean much.
   - Documentation site. Means author controls both sites. Useful for tracking account ownership evolution/forking.
 
+## Architecture
+
+Gathers lots of information
+
+- pypi 
+  - metadata via API
+  - package metadata and package contents
+  - (planned) Sigstore crytographic signature info
+- Source Repo(s)
+  - If can be found, github repo, which can have more files than the package
+- Crawls of URLs found anywhere
+  - to find backlinks
+  - to find names, via Name Entity Recognition or well known file formats
+- whois
+  - to find who owns a custom domain.
+  - Fails so often and when it doesn't fail, the domains are mostly anonymous. Candidate for future removal
+
+
 ## Prior Art
 
 Nothing I could find.
@@ -116,3 +134,9 @@ Nothing I could find.
 |-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Open Issues**   | ![GitHub issues](https://img.shields.io/github/issues/matthewdeanmartin/skip_trace)                                                               |
 | **Stars**         | ![GitHub Repo stars](https://img.shields.io/github/stars/matthewdeanmartin/skip_trace?style=social)                                               |
+
+
+## 3.14 holdups
+
+- thinc (interacts with) pytest-randomly
+- thinc, blis, spacey for NER
