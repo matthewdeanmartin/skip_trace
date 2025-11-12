@@ -13,15 +13,13 @@ repos:
       - id: check-added-large-files
       # - id: check-yaml doesn't like gitlab style !reference
       - id: check-builtin-literals
-      - id: check-byte-order-marker
+      - id: fix-byte-order-marker
       - id: check-case-conflict
       - id: check-merge-conflict
       - id: check-symlinks
       - id: check-toml
       - id: debug-statements
       - id: detect-private-key
-      - id: fix-encoding-pragma
-        args: [ --remove ]
       - id: forbid-new-submodules
 # Too aggressive if you are trying to support old vers!
 #  - repo: https://github.com/asottile/pyupgrade
