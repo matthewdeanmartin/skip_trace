@@ -10,11 +10,10 @@ license = "MIT"
 authors = [
     { name = "Matthew Dean Martin", email = "matthewdeanmartin@gmail.com" },
 ]
-requires-python = ">=3.13"
+requires-python = ">=3.13, <3.14"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Topic :: Security",
