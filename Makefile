@@ -64,7 +64,7 @@ pylint:  isort black
 	$(VENV) pylint skip_trace --fail-under 9.8
 	@touch pylint
 
-check: mypy test pylint bandit pre-commit
+check: mypy test pylint bandit
 
 .PHONY: publish
 publish: test

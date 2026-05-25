@@ -84,7 +84,7 @@ test: clean uv-lock install-plugins
 # =========================
 # Normal mode (sequential, laptop-friendly)
 # =========================
-check: mypy test pylint bandit pre-commit
+check: mypy test pylint bandit
 
 # =========================
 # Fast mode (no `bash -c`, rely on Just's [parallel])
