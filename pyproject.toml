@@ -137,13 +137,15 @@ skip-trace = "skip_trace.cli:main"
 
 
 [tool.uv]
-universal = true
 
 [tool.uv.sources]
 en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" }
 
 
 # --- Skip-Trace Application Configuration ---
+
+[tool.uv.pip]
+universal = true
 [tool.skip-trace]
 # Initial scoring weights, tunable as per the PEP
 default_min_score = 0.70
