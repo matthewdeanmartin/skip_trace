@@ -81,6 +81,11 @@ def create_parser() -> SmartParser:
     )
     p_who.add_argument("package", help="The name of the package (e.g., 'requests').")
     p_who.add_argument("--version", help="The specific version of the package.")
+    p_who.add_argument(
+        "--for-pypi-profile",
+        action="store_true",
+        help="Emit skip_trace's pypi_profile exchange JSON for this package.",
+    )
 
     # --- `venv` subcommand ---
     p_venv = sub.add_parser(
@@ -103,6 +108,15 @@ def create_parser() -> SmartParser:
     )
     p_explain.add_argument("package", help="The name of the package.")
     p_explain.add_argument("--id", help="The specific evidence ID to display.")
+
+    p_schema = sub.add_parser(
+        "schema", help="Print a JSON schema for supported machine-readable exports."
+    )
+    p_schema.add_argument(
+        "target",
+        choices=["pypi-profile"],
+        help="The export contract to describe.",
+    )
 
     # --- `graph` subcommand ---
     p_graph = sub.add_parser(

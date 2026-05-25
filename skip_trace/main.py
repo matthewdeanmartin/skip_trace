@@ -27,6 +27,7 @@ from .collectors import (
 )
 from .config import CONFIG
 from .exceptions import CollectorError, NetworkError, NoEvidenceError
+from .pypi_profile_export import PypiProfileExchange, build_exchange
 from .reporting import json_reporter, md_reporter
 
 # Create a logger instance for this module
@@ -47,183 +48,161 @@ def setup_logging(level: str = "INFO"):
     )
 
 
+def analyze_package(package: str, version: str | None = None) -> schemas.PackageResult:
+    """Analyze a package and return the full ownership result."""
+    metadata = pypi.fetch_package_metadata(package, version)
+    package_name = metadata.get("info", {}).get("name", package)
+    package_version = metadata.get("info", {}).get("version")
+    logger.info(
+        f"Successfully fetched metadata for {package_name} v{package_version}"
+    )
+
+    evidence_records, pypi_maintainers = evidence_analyzer.extract_from_pypi(metadata)
+    logger.info(f"Evidence records so far {len(evidence_records)} -- pypi metadata")
+
+    attestation_evidence = pypi_attestations.collect(metadata)
+    evidence_records.extend(attestation_evidence)
+    logger.info(
+        f"Evidence records so far {len(evidence_records)} -- collected from PyPI attestations"
+    )
+
+    try:
+        package_files_evidence = package_files.collect_from_package_files(metadata)
+        evidence_records.extend(package_files_evidence)
+        logger.info(
+            f"Evidence records so far {len(evidence_records)} -- collected from source code in package"
+        )
+    except CollectorError as e:
+        logger.warning(f"Could not analyze package files for {package_name}: {e}")
+
+    cross_ref_evidence = pypi.cross_reference_by_user(package_name)
+    evidence_records.extend(cross_ref_evidence)
+    logger.info(f"Evidence records so far {len(evidence_records)} -- user cross ref")
+
+    repo_urls = set()
+    for record in evidence_records:
+        if (
+            record.source == schemas.EvidenceSource.PYPI
+            and record.kind == schemas.EvidenceKind.ORGANIZATION
+        ):
+            url = record.value.get("url")
+            if url and "github.com" in url:
+                repo_urls.add(url)
+
+    for url in repo_urls:
+        logger.info(f"Analyzing GitHub repository: {url}")
+        try:
+            github_evidence = github.extract_from_repo_url(url)
+            evidence_records.extend(github_evidence)
+            logger.info(
+                f"Evidence records so far {len(evidence_records)} -- collected from github"
+            )
+        except CollectorError as e:
+            logger.warning(f"Could not fully analyze GitHub repo {url}: {e}")
+
+        try:
+            github_files_evidence = github_files.collect_from_repo_url(url)
+            evidence_records.extend(github_files_evidence)
+            logger.info(
+                f"Evidence records so far {len(evidence_records)} -- collected from github files"
+            )
+        except CollectorError as e:
+            logger.warning(f"Could not collect GitHub files for {url}: {e}")
+
+    domains_to_check: Set[str] = set()
+    urls_to_scan: Set[str] = set()
+    ignored_domains = set(CONFIG.get("whois_ignored_domains", []))
+
+    for record in evidence_records:
+        if email := record.value.get("email"):
+            if "@" in email:
+                domain = email.split("@")[1]
+                if domain not in ignored_domains:
+                    domains_to_check.add(domain)
+        if url := record.value.get("url"):
+            urls_to_scan.add(url)
+            try:
+                parsed_url = urlparse(url)
+                if "github.com" in parsed_url.netloc:
+                    path_parts = [p for p in parsed_url.path.split("/") if p]
+                    if len(path_parts) >= 2:
+                        user_url = (
+                            f"{parsed_url.scheme}://{parsed_url.netloc}/{path_parts[0]}"
+                        )
+                        urls_to_scan.add(user_url)
+            except Exception as e:
+                logger.debug(f"Could not parse user URL from {url}: {e}")
+
+            extracted = tldextract.extract(url)
+            if extracted.registered_domain:
+                if extracted.registered_domain not in ignored_domains:
+                    domains_to_check.add(extracted.registered_domain)
+                    urls_to_scan.add(url)
+
+    logger.info(f"Domains for WHOIS: {', '.join(sorted(list(domains_to_check)))}")
+    if domains_to_check:
+        for domain in domains_to_check:
+            try:
+                evidence_records.extend(whois.collect_from_domain(domain))
+                logger.info(
+                    f"Evidence records so far {len(evidence_records)} -- collected from domains/whois"
+                )
+            except CollectorError as e:
+                logger.warning(f"WHOIS failed for {domain}: {e}")
+
+    logger.info(f"URLs to scan: {', '.join(sorted(list(urls_to_scan)))}")
+    if urls_to_scan:
+        try:
+            evidence_records.extend(urls.collect_from_urls(urls_to_scan))
+            logger.info(
+                f"Evidence records so far {len(evidence_records)} -- collected from urls"
+            )
+        except CollectorError as e:
+            logger.warning(f"URL scanning failed: {e}")
+
+    logger.info("Starting backlink analysis phase.")
+    all_url_map = backlinks.gather_urls_from_evidence(evidence_records)
+    pypi_project_url = f"https://pypi.org/project/{package_name}/"
+    trusted_anchor_urls: Set[str] = {pypi_project_url}
+    candidate_urls = {
+        url: record
+        for url, record in all_url_map.items()
+        if url not in trusted_anchor_urls
+    }
+    backlink_evidence = backlinks.analyze_backlinks(
+        candidate_urls, trusted_anchor_urls
+    )
+    if backlink_evidence:
+        evidence_records.extend(backlink_evidence)
+        logger.info(
+            f"Added {len(backlink_evidence)} new evidence records from backlink analysis."
+        )
+
+    owner_candidates = scoring.score_owners(evidence_records)
+    return schemas.PackageResult(
+        package=package_name,
+        version=package_version,
+        owners=owner_candidates,
+        maintainers=pypi_maintainers,
+        evidence=evidence_records,
+    )
+
+
 def run_who_owns(args: argparse.Namespace) -> int:
     """Handler for the 'who-owns' command."""
     logger.info(f"Executing 'who-owns' for package: {args.package}")
 
     try:
-        # Collect initial data from PyPI
-        metadata = pypi.fetch_package_metadata(args.package, args.version)
-        package_name = metadata.get("info", {}).get("name", args.package)
-        package_version = metadata.get("info", {}).get("version")
-        logger.info(
-            f"Successfully fetched metadata for {package_name} v{package_version}"
-        )
-
-        # Analyze primary package metadata
-        evidence_records, pypi_maintainers = evidence_analyzer.extract_from_pypi(
-            metadata
-        )
-
-        logger.info(f"Evidence records so far {len(evidence_records)} -- pypi metadata")
-
-        # Check for PyPI attestations
-        attestation_evidence = pypi_attestations.collect(metadata)
-        evidence_records.extend(attestation_evidence)
-        logger.info(
-            f"Evidence records so far {len(evidence_records)} -- collected from PyPI attestations"
-        )
-
-        # Analyze package contents for deep evidence
-        try:
-            package_files_evidence = package_files.collect_from_package_files(metadata)
-            evidence_records.extend(package_files_evidence)
-            logger.info(
-                f"Evidence records so far {len(evidence_records)} -- collected from source code in package"
-            )
-        except CollectorError as e:
-            logger.warning(f"Could not analyze package files for {package_name}: {e}")
-
-        # Cross-Reference for more PyPI evidence
-        cross_ref_evidence = pypi.cross_reference_by_user(package_name)
-        evidence_records.extend(cross_ref_evidence)
-        logger.info(
-            f"Evidence records so far {len(evidence_records)} -- user cross ref"
-        )
-
-        # Fetch evidence from code repositories found in PyPI evidence
-        repo_urls = set()
-        for record in evidence_records:
-            if (
-                record.source == schemas.EvidenceSource.PYPI
-                and record.kind == schemas.EvidenceKind.ORGANIZATION
-            ):
-                url = record.value.get("url")
-                if url and "github.com" in url:
-                    repo_urls.add(url)
-
-        for url in repo_urls:
-            logger.info(f"Analyzing GitHub repository: {url}")
-            try:
-                github_evidence = github.extract_from_repo_url(url)
-                evidence_records.extend(github_evidence)
-                logger.info(
-                    f"Evidence records so far {len(evidence_records)} -- collected from github"
-                )
-            except CollectorError as e:
-                logger.warning(f"Could not fully analyze GitHub repo {url}: {e}")
-
-            # NEW: Collect evidence from GitHub files (SECURITY.md, FUNDING.yml, contributors)
-            try:
-                github_files_evidence = github_files.collect_from_repo_url(url)
-                evidence_records.extend(github_files_evidence)
-                logger.info(
-                    f"Evidence records so far {len(evidence_records)} -- collected from github files"
-                )
-            except CollectorError as e:
-                logger.warning(f"Could not collect GitHub files for {url}: {e}")
-
-        # Extract domains and perform WHOIS lookups
-        domains_to_check: Set[str] = set()
-        urls_to_scan: Set[str] = set()
-        ignored_domains = set(CONFIG.get("whois_ignored_domains", []))
-
-        for record in evidence_records:
-            # Extract domains for WHOIS
-            if email := record.value.get("email"):
-                if "@" in email:
-                    domain = email.split("@")[1]
-                    if domain not in ignored_domains:
-                        domains_to_check.add(domain)
-            # Extract domains and full URLs
-            if url := record.value.get("url"):
-                urls_to_scan.add(url)
-
-                # If it's a GitHub repo URL, also scan the user/org URL.
-                try:
-                    parsed_url = urlparse(url)
-                    if "github.com" in parsed_url.netloc:
-                        path_parts = [p for p in parsed_url.path.split("/") if p]
-                        if len(path_parts) >= 2:  # e.g., /owner/repo
-                            user_url = f"{parsed_url.scheme}://{parsed_url.netloc}/{path_parts[0]}"
-                            urls_to_scan.add(user_url)
-                except Exception as e:
-                    logger.debug(f"Could not parse user URL from {url}: {e}")
-
-                # Gather domains from URLs for WHOIS, respecting the ignore list
-                extracted = tldextract.extract(url)
-                if extracted.registered_domain:
-                    if extracted.registered_domain not in ignored_domains:
-                        domains_to_check.add(extracted.registered_domain)
-                        urls_to_scan.add(url)
-
-        # Perform WHOIS lookups
-        logger.info(f"Domains for WHOIS: {', '.join(sorted(list(domains_to_check)))}")
-        if domains_to_check:
-            for domain in domains_to_check:
-                try:
-                    evidence_records.extend(whois.collect_from_domain(domain))
-                    logger.info(
-                        f"Evidence records so far {len(evidence_records)} -- collected from domains/whois"
-                    )
-                except CollectorError as e:
-                    logger.warning(f"WHOIS failed for {domain}: {e}")
-
-        # Scan homepage URLs
-        logger.info(f"URLs to scan: {', '.join(sorted(list(urls_to_scan)))}")
-        if urls_to_scan:
-            try:
-                evidence_records.extend(urls.collect_from_urls(urls_to_scan))
-                logger.info(
-                    f"Evidence records so far {len(evidence_records)} -- collected from urls"
-                )
-            except CollectorError as e:
-                logger.warning(f"URL scanning failed: {e}")
-
-        # --- NEW: Post-analysis backlink step ---
-        logger.info("Starting backlink analysis phase.")
-        all_url_map = backlinks.gather_urls_from_evidence(evidence_records)
-
-        # --- NEW LOGIC: Separate trusted anchors from candidate URLs ---
-        pypi_project_url = f"https://pypi.org/project/{package_name}/"
-        trusted_anchor_urls: Set[str] = {pypi_project_url}
-
-        # Candidates are all URLs that are not the trusted anchor itself
-        candidate_urls = {
-            url: record
-            for url, record in all_url_map.items()
-            if url not in trusted_anchor_urls
-        }
-
-        backlink_evidence = backlinks.analyze_backlinks(
-            candidate_urls, trusted_anchor_urls
-        )
-        if backlink_evidence:
-            evidence_records.extend(backlink_evidence)
-            logger.info(
-                f"Added {len(backlink_evidence)} new evidence records from backlink analysis."
-            )
-
-        # Score all collected evidence
-        owner_candidates = scoring.score_owners(evidence_records)
-
-        # Assemble final result object
-        package_result = schemas.PackageResult(
-            package=package_name,
-            version=package_version,
-            owners=owner_candidates,
-            maintainers=pypi_maintainers,
-            evidence=evidence_records,
-        )
-
-        # 10. Report
-        if args.output_format == "json":
+        package_result = analyze_package(args.package, args.version)
+        if getattr(args, "for_pypi_profile", False):
+            exchange = build_exchange(package_result)
+            json_reporter.render_data(exchange.model_dump(mode="json"))
+        elif args.output_format == "json":
             json_reporter.render(package_result)
         else:
             md_reporter.render(package_result)
 
-        # Exit codes
-        top_score = owner_candidates[0].score if owner_candidates else 0
+        top_score = package_result.owners[0].score if package_result.owners else 0
         return 0 if top_score >= 0.5 else 101
     except NoEvidenceError as e:
         logger.error(f"{type(e).__name__}: {e}")
@@ -262,6 +241,15 @@ def run_explain(args: argparse.Namespace) -> int:
         return 101
 
 
+def run_schema(args: argparse.Namespace) -> int:
+    """Handler for the 'schema' command."""
+    if args.target == "pypi-profile":
+        json_reporter.render_data(PypiProfileExchange.model_json_schema())
+        return 0
+    print(f"Error: Unknown schema target '{args.target}'.", file=sys.stderr)
+    return 2
+
+
 def run_venv(args: argparse.Namespace) -> int:
     """Handler for the 'venv' command."""
     print("Executing 'venv' command...")
@@ -297,6 +285,7 @@ def run_command(args: argparse.Namespace) -> int:
     command_handlers = {
         "who-owns": run_who_owns,
         "explain": run_explain,
+        "schema": run_schema,
         "venv": run_venv,
         "reqs": run_reqs,
         # "graph": run_graph,

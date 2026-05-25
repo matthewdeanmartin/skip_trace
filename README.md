@@ -35,6 +35,13 @@ communicate with them.
 skip-trace who-owns requests
 ```
 
+To emit the exchange payload that `pypi-profile` can consume:
+
+```bash
+skip-trace who-owns requests --for-pypi-profile > skip-trace-profile.json
+skip-trace schema pypi-profile > skip-trace-profile.schema.json
+```
+
 What you will see is the owner table and the maintainer tables.
 
 The owner table is pretty close to all the names, email addresses and custom domains I can find.

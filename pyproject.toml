@@ -10,10 +10,9 @@ license = "MIT"
 authors = [
     { name = "Matthew Dean Martin", email = "matthewdeanmartin@gmail.com" },
 ]
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.13",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Topic :: Security",
@@ -53,10 +52,13 @@ keywords = [
 
 [dependency-groups]
 dev = [
+    "dont-be-lazy>=0.1.2",
+    "pydoc-fork>=3.0.0",
+
     "jiggle-version>=2.0.1",
     "maturin>=1.9.6; python_version >= '3.14'",
     "pydantic>=2.12.0; python_version >= '3.14'",
-    "troml-dev-status>0.5.0; python_version >= '3.9'",
+    "troml-dev-status>0.5.0",
     "git2md; python_version >= '3.10'",
     "pyclean; python_version >= '3.12'",
     "strip-docs>=1.0; python_version >= '3.12'",

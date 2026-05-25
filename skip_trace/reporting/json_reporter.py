@@ -4,7 +4,7 @@ from __future__ import annotations
 import dataclasses
 import json
 import sys
-from typing import IO
+from typing import IO, Any
 
 from ..schemas import PackageResult
 
@@ -19,4 +19,10 @@ def render(result: PackageResult, file: IO[str] = sys.stdout):
     """
     # default=str is a handler for non-serializable types like datetime
     json.dump(dataclasses.asdict(result), file, indent=2, default=str)
+    file.write("\n")
+
+
+def render_data(data: Any, file: IO[str] = sys.stdout):
+    """Render arbitrary JSON-serializable data."""
+    json.dump(data, file, indent=2, default=str)
     file.write("\n")
