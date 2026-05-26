@@ -4,6 +4,7 @@
 
 
 import whoisit
+
 whoisit.bootstrap()
 data = whoisit.domain("wakayos.com")
 print(data)

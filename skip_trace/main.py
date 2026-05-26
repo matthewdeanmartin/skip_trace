@@ -53,9 +53,7 @@ def analyze_package(package: str, version: str | None = None) -> schemas.Package
     metadata = pypi.fetch_package_metadata(package, version)
     package_name = metadata.get("info", {}).get("name", package)
     package_version = metadata.get("info", {}).get("version")
-    logger.info(
-        f"Successfully fetched metadata for {package_name} v{package_version}"
-    )
+    logger.info(f"Successfully fetched metadata for {package_name} v{package_version}")
 
     evidence_records, pypi_maintainers = evidence_analyzer.extract_from_pypi(metadata)
     logger.info(f"Evidence records so far {len(evidence_records)} -- pypi metadata")
@@ -169,9 +167,7 @@ def analyze_package(package: str, version: str | None = None) -> schemas.Package
         for url, record in all_url_map.items()
         if url not in trusted_anchor_urls
     }
-    backlink_evidence = backlinks.analyze_backlinks(
-        candidate_urls, trusted_anchor_urls
-    )
+    backlink_evidence = backlinks.analyze_backlinks(candidate_urls, trusted_anchor_urls)
     if backlink_evidence:
         evidence_records.extend(backlink_evidence)
         logger.info(

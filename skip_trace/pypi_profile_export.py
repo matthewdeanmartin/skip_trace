@@ -144,7 +144,8 @@ def build_exchange(result: PackageResult) -> PypiProfileExchange:
         | {
             owner.name
             for owner in result.owners
-            if owner.kind in (OwnerKind.COMPANY, OwnerKind.FOUNDATION, OwnerKind.PROJECT)
+            if owner.kind
+            in (OwnerKind.COMPANY, OwnerKind.FOUNDATION, OwnerKind.PROJECT)
             and owner.name
         }
     )
@@ -231,7 +232,9 @@ def build_exchange(result: PackageResult) -> PypiProfileExchange:
         pypi_usernames=pypi_usernames,
         owner_candidates=owner_candidates,
     )
-    subject_kind = "company" if organization_names and not display_name else "individual"
+    subject_kind = (
+        "company" if organization_names and not display_name else "individual"
+    )
     subject = ExportSubject(
         kind=subject_kind,
         display_name=display_name,

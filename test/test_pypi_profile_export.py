@@ -19,8 +19,12 @@ def test_build_exchange_collects_identity_details() -> None:
     result = PackageResult(
         package="demo-package",
         version="1.2.3",
-        owners=[OwnerCandidate(name="Alice Example", kind=OwnerKind.INDIVIDUAL, score=0.9)],
-        maintainers=[Maintainer(name="Alice Example", email="alice@example.com", confidence=0.8)],
+        owners=[
+            OwnerCandidate(name="Alice Example", kind=OwnerKind.INDIVIDUAL, score=0.9)
+        ],
+        maintainers=[
+            Maintainer(name="Alice Example", email="alice@example.com", confidence=0.8)
+        ],
         evidence=[
             EvidenceRecord(
                 id="e1",
@@ -68,6 +72,8 @@ def test_build_exchange_collects_identity_details() -> None:
     assert exchange.subject.contacts[0].value == "alice@example.com"
     assert exchange.subject.profiles[0].kind in {"pypi", "github"}
     assert exchange.source_package.name == "demo-package"
+
+
 def test_export_model_exposes_json_schema() -> None:
     schema = PypiProfileExchange.model_json_schema()
 
