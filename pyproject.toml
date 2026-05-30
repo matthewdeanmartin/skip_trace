@@ -106,8 +106,8 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/matthewdeanmartin/skip-trace"
-Issues = "https://github.com/matthewdeanmartin/skip-trace/issues"
+Homepage = "https://github.com/matthewdeanmartin/skip_trace"
+Issues = "https://github.com/matthewdeanmartin/skip_trace/issues"
 
 [build-system]
 requires = ["hatchling"]

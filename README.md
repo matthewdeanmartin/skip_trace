@@ -147,3 +147,10 @@ Nothing I could find.
 
 - thinc (interacts with) pytest-randomly
 - thinc, blis, spacey for NER
+
+## Project Links
+
+- [GitHub](https://github.com/matthewdeanmartin/skip_trace)
+- [PyPI](https://pypi.org/project/skip-trace/)
+- [Bug Tracker](https://github.com/matthewdeanmartin/skip_trace/issues)
+- [Change Log](https://github.com/matthewdeanmartin/skip_trace/blob/main/CHANGELOG.md)
