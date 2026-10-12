@@ -5,7 +5,7 @@ import json
 import logging
 import os
 import time
-from typing import Any, Optional
+from typing import Any
 
 from ..config import CONFIG
 
@@ -24,7 +24,7 @@ def get_cache_path(cache_type: str, key: str) -> str:
     return os.path.join(cache_dir, f"{safe_key}.json")
 
 
-def get_cached_data(cache_type: str, key: str) -> Optional[Any]:
+def get_cached_data(cache_type: str, key: str) -> Any | None:
     """
     Retrieves data from the cache if it exists and is not expired.
 
@@ -48,7 +48,7 @@ def get_cached_data(cache_type: str, key: str) -> Optional[Any]:
             try:
                 with open(file_path, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError) as e:
+            except (OSError, json.JSONDecodeError) as e:
                 logger.warning(f"Could not read cache file {file_path}: {e}")
                 return None
     return None
@@ -73,5 +73,5 @@ def set_cached_data(cache_type: str, key: str, data: Any):
     try:
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, default=str)
-    except IOError as e:
+    except OSError as e:
         logger.error(f"Could not write to cache file {file_path}: {e}")

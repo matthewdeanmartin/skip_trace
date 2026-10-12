@@ -4,7 +4,6 @@ from __future__ import annotations
 import datetime
 import logging
 import os
-from typing import List, Set
 
 from bs4 import BeautifulSoup
 
@@ -27,7 +26,7 @@ def _ensure_download_dir():
             f.write("*\n")
 
 
-def collect_from_urls(urls: Set[str]) -> List[EvidenceRecord]:
+def collect_from_urls(urls: set[str]) -> list[EvidenceRecord]:
     """
     Downloads, caches, and scans a list of URLs for evidence.
 
@@ -38,8 +37,8 @@ def collect_from_urls(urls: Set[str]) -> List[EvidenceRecord]:
         A list of EvidenceRecord objects from the URLs.
     """
     _ensure_download_dir()
-    all_evidence: List[EvidenceRecord] = []
-    now = datetime.datetime.now(datetime.timezone.utc)
+    all_evidence: list[EvidenceRecord] = []
+    now = datetime.datetime.now(datetime.UTC)
 
     for url in urls:
         logger.info(f"Analyzing URL: {url}")

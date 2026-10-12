@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import whois as python_whois
 from whoisit import domain as rdap_domain
@@ -15,7 +15,7 @@ from ..utils.cache import get_cached_data, set_cached_data
 logger = logging.getLogger(__name__)
 
 
-def _normalize_org_name(name: Optional[str]) -> Optional[str]:
+def _normalize_org_name(name: str | None) -> str | None:
     """Cleans up organization names from WHOIS/RDAP data."""
     if not isinstance(name, str):
         return None
@@ -45,7 +45,7 @@ def _normalize_org_name(name: Optional[str]) -> Optional[str]:
     return name.title()
 
 
-def _rdap_extract(w: Dict[str, Any]) -> Dict[str, Any]:
+def _rdap_extract(w: dict[str, Any]) -> dict[str, Any]:
     """Map RDAP JSON -> normalized fields: org, registrar, creation_date, expiration_date."""
     org = None
     registrar = None
@@ -84,7 +84,7 @@ def _rdap_extract(w: Dict[str, Any]) -> Dict[str, Any]:
             expiration_date = date
 
     # ISO8601 -> datetime with tz
-    def _parse_dt(x: Any) -> Optional[_dt.datetime]:
+    def _parse_dt(x: Any) -> _dt.datetime | None:
         if not x:
             return None
         try:
@@ -103,7 +103,7 @@ def _rdap_extract(w: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def _whois_extract(w: Any) -> Dict[str, Any]:
+def _whois_extract(w: Any) -> dict[str, Any]:
     """Map python-whois result -> normalized fields."""
     get = w.get if hasattr(w, "get") else lambda k, d=None: getattr(w, k, d)
     return {
@@ -115,7 +115,7 @@ def _whois_extract(w: Any) -> Dict[str, Any]:
     }
 
 
-def _lookup(domain: str) -> Dict[str, Any]:
+def _lookup(domain: str) -> dict[str, Any]:
     """RDAP first, WHOIS fallback. Returns normalized dict or {'error': ...}."""
     # 1) RDAP (HTTP/JSON; far more reliable)
     if rdap_domain is not None:
@@ -141,13 +141,13 @@ def _lookup(domain: str) -> Dict[str, Any]:
     return {"error": "No RDAP/WHOIS client available or no usable data returned."}
 
 
-def collect_from_domain(domain: str) -> List[EvidenceRecord]:
+def collect_from_domain(domain: str) -> list[EvidenceRecord]:
     """
     Collect registration ownership signals for a domain using RDAP (preferred) with WHOIS fallback.
     Uses caching to avoid repeated lookups and rate limits.
     """
     logger.info("Checking %s", domain)
-    now = _dt.datetime.now(_dt.timezone.utc)
+    now = _dt.datetime.now(_dt.UTC)
     cache_key_ns = "rdap"  # new namespace; do not collide with legacy "whois"
     locator_base = "rdap://"
 

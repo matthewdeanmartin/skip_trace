@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 from email_validator import EmailNotValidError, validate_email
 
@@ -19,7 +18,7 @@ RESERVED_DOMAINS = {
 RESERVED_SUFFIXES = {".test", ".example", ".invalid", ".localhost"}
 
 
-def is_valid_email(email_string: str) -> Optional[str]:
+def is_valid_email(email_string: str) -> str | None:
     """
     Checks if a string is a valid email address using a robust library.
 

@@ -11,7 +11,7 @@ import os
 import shutil
 import subprocess  # nosec
 import tempfile
-from typing import Any, Dict, List
+from typing import Any
 
 from ..analysis.evidence import generate_evidence_id
 from ..schemas import EvidenceKind, EvidenceRecord, EvidenceSource
@@ -20,7 +20,7 @@ from ..utils import http_client
 logger = logging.getLogger(__name__)
 
 
-def collect(metadata: Dict[str, Any]) -> List[EvidenceRecord]:
+def collect(metadata: dict[str, Any]) -> list[EvidenceRecord]:
     """
     Finds and verifies PyPI attestations by calling the `pypi-attestations` CLI.
 
@@ -116,7 +116,7 @@ def collect(metadata: Dict[str, Any]) -> List[EvidenceRecord]:
 
             # Create the evidence record.
             org_name = repo_slug.split("/")[0]
-            now = datetime.datetime.now(datetime.timezone.utc)
+            now = datetime.datetime.now(datetime.UTC)
             value = {
                 "publisher_kind": "github",
                 "repository": repo_slug,

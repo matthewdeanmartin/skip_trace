@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import datetime
 import logging
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 from bs4 import BeautifulSoup
 
@@ -19,8 +19,8 @@ PYPI_PROJECT_URL = "https://pypi.org/project"
 
 
 def fetch_package_metadata(
-    package_name: str, version: Optional[str] = None
-) -> Dict[str, Any]:
+    package_name: str, version: str | None = None
+) -> dict[str, Any]:
     """
     Fetches package metadata from the PyPI JSON API.
 
@@ -47,7 +47,7 @@ def fetch_package_metadata(
         raise
 
 
-def _scrape_user_profile_url(package_name: str) -> Optional[str]:
+def _scrape_user_profile_url(package_name: str) -> str | None:
     """Scrapes the PyPI project page to find the user profile URL."""
     try:
         url = f"{PYPI_PROJECT_URL}/{package_name}/"
@@ -66,7 +66,7 @@ def _scrape_user_profile_url(package_name: str) -> Optional[str]:
     return None
 
 
-def _fetch_other_package_urls(user_profile_url: str) -> Set[str]:
+def _fetch_other_package_urls(user_profile_url: str) -> set[str]:
     """Scrapes a user's profile page to find their other packages."""
     packages = set()
     try:
@@ -85,7 +85,7 @@ def _fetch_other_package_urls(user_profile_url: str) -> Set[str]:
     return packages
 
 
-def cross_reference_by_user(package_name: str) -> List[EvidenceRecord]:
+def cross_reference_by_user(package_name: str) -> list[EvidenceRecord]:
     """
     Finds other packages by the same user to uncover more evidence.
     Also creates an evidence record for the PyPI user itself and key PyPI URLs.
@@ -96,8 +96,8 @@ def cross_reference_by_user(package_name: str) -> List[EvidenceRecord]:
     Returns:
         A list of new EvidenceRecord objects found from related packages.
     """
-    new_evidence: List[EvidenceRecord] = []
-    now = datetime.datetime.now(datetime.timezone.utc)
+    new_evidence: list[EvidenceRecord] = []
+    now = datetime.datetime.now(datetime.UTC)
     project_page_url = f"{PYPI_PROJECT_URL}/{package_name}/"
 
     # --- NEW: Always add the PyPI project page itself as a URL to scan ---

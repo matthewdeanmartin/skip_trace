@@ -1,7 +1,7 @@
 # tests/test_pypi_collector_integration.py
 from __future__ import annotations
 
-from typing import Any, Dict, Set
+from typing import Any
 
 import pytest
 
@@ -15,14 +15,14 @@ FAKE = "this-package-name-should-not-exist-zzxxyyqq"
 
 
 def test_fetch_package_metadata_latest(require_pypi):
-    meta: Dict[str, Any] = pypi_collector.fetch_package_metadata(PKG)
+    meta: dict[str, Any] = pypi_collector.fetch_package_metadata(PKG)
     assert isinstance(meta, dict)
     assert "info" in meta and isinstance(meta["info"], dict)
     assert meta["info"].get("name", "").lower() == PKG
 
 
 def test_fetch_package_metadata_specific_version(require_pypi):
-    meta: Dict[str, Any] = pypi_collector.fetch_package_metadata(PKG, PKG_VERSION)
+    meta: dict[str, Any] = pypi_collector.fetch_package_metadata(PKG, PKG_VERSION)
     assert meta["info"].get("version") == PKG_VERSION
 
 
@@ -46,7 +46,7 @@ def test_fetch_other_package_urls_has_results_when_profile_exists(require_pypi):
     profile_url = pypi_collector._scrape_user_profile_url(PKG)
     if profile_url is None:
         pytest.skip("No visible PyPI user profile on project page; cannot cross-check.")
-    pkgs: Set[str] = pypi_collector._fetch_other_package_urls(profile_url)
+    pkgs: set[str] = pypi_collector._fetch_other_package_urls(profile_url)
     # Some maintainers only have one package; allow empty but prefer >= 1.
     assert isinstance(pkgs, set)
     assert all(isinstance(n, str) and n for n in pkgs)

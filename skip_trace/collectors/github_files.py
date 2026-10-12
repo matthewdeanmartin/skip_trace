@@ -4,7 +4,6 @@ from __future__ import annotations
 import datetime
 import logging
 import re
-from typing import List, Optional, Set
 from urllib.parse import urlparse
 
 from github import GithubException
@@ -17,7 +16,7 @@ from .github import _create_records_from_user_profile, get_github_client
 logger = logging.getLogger(__name__)
 
 
-def _parse_repo_url(url: str) -> Optional[str]:
+def _parse_repo_url(url: str) -> str | None:
     """Parses a GitHub URL to extract the 'owner/repo' string."""
     try:
         parsed = urlparse(url)
@@ -33,7 +32,7 @@ def _parse_repo_url(url: str) -> Optional[str]:
     return None
 
 
-def collect_security_policy(repo_url: str) -> List[EvidenceRecord]:
+def collect_security_policy(repo_url: str) -> list[EvidenceRecord]:
     """
     Fetches and parses SECURITY.md from a GitHub repo.
 
@@ -45,8 +44,8 @@ def collect_security_policy(repo_url: str) -> List[EvidenceRecord]:
     Returns:
         A list of EvidenceRecord objects from the security policy.
     """
-    evidence: List[EvidenceRecord] = []
-    now = datetime.datetime.now(datetime.timezone.utc)
+    evidence: list[EvidenceRecord] = []
+    now = datetime.datetime.now(datetime.UTC)
 
     # Try common locations for security policy
     security_paths = [
@@ -73,7 +72,7 @@ def collect_security_policy(repo_url: str) -> List[EvidenceRecord]:
                 email_pattern = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
                 emails = re.findall(email_pattern, content)
 
-                seen_emails: Set[str] = set()
+                seen_emails: set[str] = set()
                 for email in emails:
                     from ..utils.validation import is_valid_email
 
@@ -114,7 +113,7 @@ def collect_security_policy(repo_url: str) -> List[EvidenceRecord]:
     return evidence
 
 
-def collect_funding_info(repo_url: str) -> List[EvidenceRecord]:
+def collect_funding_info(repo_url: str) -> list[EvidenceRecord]:
     """
     Parses .github/FUNDING.yml for sponsor/funding identities.
 
@@ -127,8 +126,8 @@ def collect_funding_info(repo_url: str) -> List[EvidenceRecord]:
     Returns:
         A list of EvidenceRecord objects from funding configuration.
     """
-    evidence: List[EvidenceRecord] = []
-    now = datetime.datetime.now(datetime.timezone.utc)
+    evidence: list[EvidenceRecord] = []
+    now = datetime.datetime.now(datetime.UTC)
 
     repo_url = repo_url.rstrip("/")
 
@@ -254,7 +253,7 @@ def collect_funding_info(repo_url: str) -> List[EvidenceRecord]:
     return evidence
 
 
-def collect_top_contributors(repo_url: str) -> List[EvidenceRecord]:
+def collect_top_contributors(repo_url: str) -> list[EvidenceRecord]:
     """
     Fetches top contributors from a GitHub repo via the API.
 
@@ -267,7 +266,7 @@ def collect_top_contributors(repo_url: str) -> List[EvidenceRecord]:
     Returns:
         A list of EvidenceRecord objects from contributor profiles.
     """
-    evidence: List[EvidenceRecord] = []
+    evidence: list[EvidenceRecord] = []
 
     repo_full_name = _parse_repo_url(repo_url)
     if not repo_full_name:
@@ -312,7 +311,7 @@ def collect_top_contributors(repo_url: str) -> List[EvidenceRecord]:
     return evidence
 
 
-def collect_from_repo_url(repo_url: str) -> List[EvidenceRecord]:
+def collect_from_repo_url(repo_url: str) -> list[EvidenceRecord]:
     """
     Main entry point: collects evidence from all GitHub file sources.
 
@@ -327,7 +326,7 @@ def collect_from_repo_url(repo_url: str) -> List[EvidenceRecord]:
     Returns:
         A combined list of all EvidenceRecord objects found.
     """
-    all_evidence: List[EvidenceRecord] = []
+    all_evidence: list[EvidenceRecord] = []
 
     logger.info(f"Collecting evidence from GitHub files for {repo_url}")
 

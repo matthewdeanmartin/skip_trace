@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, List, Optional, Tuple
+from typing import Any
 
 try:
     import spacy
@@ -16,10 +16,10 @@ SPACY_AVAILABLE = spacy is not None
 
 logger = logging.getLogger(__name__)
 
-_nlp: Optional[Language] = None
+_nlp: Language | None = None
 
 
-def _get_nlp_model() -> Optional[Language]:
+def _get_nlp_model() -> Language | None:
     """Loads and caches the spaCy model. Returns None if unavailable."""
     global _nlp
     if not SPACY_AVAILABLE:
@@ -29,7 +29,7 @@ def _get_nlp_model() -> Optional[Language]:
             logger.debug("Loading spaCy model 'en_core_web_sm'...")
             _nlp = spacy.load("en_core_web_sm")
             logger.info("Successfully loaded spaCy NER model.")
-        except IOError:
+        except OSError:
             logger.warning(
                 "spaCy is installed, but model 'en_core_web_sm' not found. "
                 "Run 'python -m spacy download en_core_web_sm' to install it."
@@ -38,7 +38,7 @@ def _get_nlp_model() -> Optional[Language]:
     return _nlp
 
 
-def extract_entities(text: str) -> List[Tuple[str, str]]:
+def extract_entities(text: str) -> list[tuple[str, str]]:
     """
     Extracts person and organization entities from a string using spaCy.
 

@@ -5,7 +5,6 @@ import datetime
 import logging
 import os
 import re
-from typing import List, Set
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
@@ -45,7 +44,7 @@ def _clean_url(url: str) -> str:
     return url
 
 
-def _from_html(content: str, source_url: str | None = None) -> Set[str]:
+def _from_html(content: str, source_url: str | None = None) -> set[str]:
     """Extracts URLs from <a> and other tags in HTML content."""
     urls = set()
     try:
@@ -64,7 +63,7 @@ def _from_html(content: str, source_url: str | None = None) -> Set[str]:
     return urls
 
 
-def _from_markdown(content: str) -> Set[str]:
+def _from_markdown(content: str) -> set[str]:
     """Extracts URLs from Markdown specific syntax."""
     urls = set()
     for match in MARKDOWN_LINK_RE.finditer(content):
@@ -74,7 +73,7 @@ def _from_markdown(content: str) -> Set[str]:
     return urls
 
 
-def _from_rst(content: str) -> Set[str]:
+def _from_rst(content: str) -> set[str]:
     """Extracts URLs from reStructuredText specific syntax."""
     urls = set()
     for match in RST_LINK_RE.finditer(content):
@@ -84,16 +83,16 @@ def _from_rst(content: str) -> Set[str]:
     return urls
 
 
-def _from_generic_text(content: str) -> Set[str]:
+def _from_generic_text(content: str) -> set[str]:
     """Extracts URLs from generic text using regex as a last resort."""
     return {_clean_url(match.group(0)) for match in GENERIC_URL_RE.finditer(content)}
 
 
 def _extract_urls_from_content(
     content: str, file_type: str, source_url: str | None = None
-) -> List[str]:
+) -> list[str]:
     """Dispatches URL extraction based on file type."""
-    found_urls: Set[str] = set()
+    found_urls: set[str] = set()
 
     # Always run generic scan as a baseline, except for HTML where we get text first.
     if file_type != "html":
@@ -122,7 +121,7 @@ def _extract_urls_from_content(
 
 def scan_text_for_urls(
     content: str, locator: str, source: EvidenceSource, file_type: str = "txt"
-) -> List[EvidenceRecord]:
+) -> list[EvidenceRecord]:
     """
     Scans a string of text content specifically for URLs.
 
@@ -134,8 +133,8 @@ def scan_text_for_urls(
     Returns:
         A list of EvidenceRecord objects for any URLs found.
     """
-    evidence_list: List[EvidenceRecord] = []
-    now = datetime.datetime.now(datetime.timezone.utc)
+    evidence_list: list[EvidenceRecord] = []
+    now = datetime.datetime.now(datetime.UTC)
 
     source_url = locator if source == EvidenceSource.URL else None
     extracted_urls = _extract_urls_from_content(content, file_type, source_url)
@@ -166,7 +165,7 @@ def scan_text_for_urls(
 
 def scan_directory_for_urls(
     directory_path: str, locator_prefix: str
-) -> List[EvidenceRecord]:
+) -> list[EvidenceRecord]:
     """
     Scans a directory of files specifically for URL evidence.
 
@@ -177,7 +176,7 @@ def scan_directory_for_urls(
     Returns:
         A list of EvidenceRecord objects found in the files.
     """
-    evidence_list: List[EvidenceRecord] = []
+    evidence_list: list[EvidenceRecord] = []
     file_count = 0
 
     for root, dirs, files in os.walk(directory_path):
@@ -221,7 +220,7 @@ def scan_directory_for_urls(
                 )
                 evidence_list.extend(url_evidence)
 
-            except (IOError, UnicodeDecodeError) as e:
+            except (OSError, UnicodeDecodeError) as e:
                 logger.debug(f"Could not read or process file {file_path}: {e}")
                 continue
 

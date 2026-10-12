@@ -5,7 +5,7 @@ import datetime
 import hashlib
 import logging
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import tldextract
 from bs4 import BeautifulSoup  # Added import
@@ -46,7 +46,7 @@ def generate_evidence_id(
     locator: str,
     value: Any,  # Changed to Any for dataclasses
     slug_subject: str,
-    hint: Optional[str] = None,
+    hint: str | None = None,
 ) -> str:
     """
     Generates a human-readable and deterministic Evidence ID.
@@ -74,13 +74,13 @@ def generate_evidence_id(
 
     # Create the hash
     hasher = hashlib.sha256()
-    hasher.update(f"{source.value}|{kind.value}|{locator}|{value}".encode("utf-8"))
+    hasher.update(f"{source.value}|{kind.value}|{locator}|{value}".encode())
     hash8 = hasher.hexdigest()[:8]
 
     return f"e-{source.value}-{kind.value}-{slug}~{hash8}"
 
 
-def _parse_contact_string(contact_str: str) -> Dict[str, Optional[str]]:
+def _parse_contact_string(contact_str: str) -> dict[str, str | None]:
     """
     Parses a contact string into its name and email components.
 
@@ -126,8 +126,8 @@ def _clean_pypi_field(field_value: Any) -> str:
 
 
 def extract_from_pypi(
-    metadata: Dict[str, Any],
-) -> Tuple[List[EvidenceRecord], List[Maintainer]]:
+    metadata: dict[str, Any],
+) -> tuple[list[EvidenceRecord], list[Maintainer]]:
     """
     Extracts evidence from raw PyPI package metadata.
 
@@ -139,8 +139,8 @@ def extract_from_pypi(
          - A list of EvidenceRecord objects.
          - A list of Maintainer objects from direct PyPI fields.
     """
-    evidence_list: List[EvidenceRecord] = []
-    maintainer_list: List[Maintainer] = []
+    evidence_list: list[EvidenceRecord] = []
+    maintainer_list: list[Maintainer] = []
     seen_maintainers = set()
 
     info = metadata.get("info", {})
@@ -151,7 +151,7 @@ def extract_from_pypi(
     package_name = info.get("name", "unknown")
     package_version = info.get("version", "latest")
     locator = f"https://pypi.org/pypi/{package_name}/{package_version}/json"
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
 
     # --- Create separate evidence for names and emails ---
     def process_contact_string(
@@ -165,7 +165,7 @@ def extract_from_pypi(
             return
 
         def add_separate_evidence(
-            parsed_contact: Dict[str, Optional[str]],
+            parsed_contact: dict[str, str | None],
             source_note: str,
             confidence: float,
         ) -> None:

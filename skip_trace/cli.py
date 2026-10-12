@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import sys
-from typing import List, Optional
 
 from rich_argparse import RichHelpFormatter
 
@@ -161,7 +160,7 @@ def create_parser() -> SmartParser:
     return parser
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     """
     Main entry point for the CLI.
 

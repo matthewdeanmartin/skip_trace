@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import datetime
 import logging
-from typing import Dict, List, Optional, Set
 from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
@@ -18,10 +17,10 @@ from ..utils import http_client
 
 logger = logging.getLogger(__name__)
 
-_github_client: Optional[Github] = None
+_github_client: Github | None = None
 
 
-def get_github_client() -> Optional[Github]:
+def get_github_client() -> Github | None:
     """
     Initializes and returns a singleton PyGithub client instance.
 
@@ -49,7 +48,7 @@ def get_github_client() -> Optional[Github]:
     return _github_client
 
 
-def _parse_repo_url(url: str) -> Optional[str]:
+def _parse_repo_url(url: str) -> str | None:
     """Parses a GitHub URL to extract the 'owner/repo' string."""
     try:
         parsed = urlparse(url)
@@ -65,9 +64,9 @@ def _parse_repo_url(url: str) -> Optional[str]:
     return None
 
 
-def _scrape_socials_from_html(html_url: str) -> Dict[str, str]:
+def _scrape_socials_from_html(html_url: str) -> dict[str, str]:
     """Scrapes a user's GitHub profile page for social media and blog links."""
-    contacts: Dict[str, str] = {}
+    contacts: dict[str, str] = {}
     try:
         logger.debug(f"Scraping GitHub profile HTML page for social links: {html_url}")
         response = http_client.make_request(html_url)
@@ -105,11 +104,11 @@ def _scrape_socials_from_html(html_url: str) -> Dict[str, str]:
     return contacts
 
 
-def _create_records_from_user_profile(user: NamedUser) -> List[EvidenceRecord]:
+def _create_records_from_user_profile(user: NamedUser) -> list[EvidenceRecord]:
     """Creates evidence records from a full GitHub user profile."""
     records = []
     name = user.name or user.login
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
 
     # Evidence for company affiliation
     if user.company:
@@ -177,7 +176,7 @@ def _create_records_from_user_profile(user: NamedUser) -> List[EvidenceRecord]:
     return records
 
 
-def extract_from_repo_url(repo_url: str) -> List[EvidenceRecord]:
+def extract_from_repo_url(repo_url: str) -> list[EvidenceRecord]:
     """
     Extracts ownership evidence from a GitHub repository URL.
 
@@ -188,7 +187,7 @@ def extract_from_repo_url(repo_url: str) -> List[EvidenceRecord]:
         A list of EvidenceRecord objects.
     """
     evidence = []
-    processed_users: Set[str] = set()
+    processed_users: set[str] = set()
     repo_full_name = _parse_repo_url(repo_url)
     if not repo_full_name:
         return []

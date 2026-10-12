@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import collections
 import logging
-from typing import Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
 import tldextract
@@ -71,7 +70,7 @@ def _normalize_name(name: str) -> str:
     return raw_name.strip().rstrip(",.'").lower()
 
 
-def _get_entity_from_record(record: EvidenceRecord) -> Tuple[Optional[str], OwnerKind]:
+def _get_entity_from_record(record: EvidenceRecord) -> tuple[str | None, OwnerKind]:
     """Extracts a primary entity name and kind from an evidence record."""
     kind = OwnerKind.INDIVIDUAL  # Default
     name = None
@@ -186,7 +185,7 @@ def _get_entity_from_record(record: EvidenceRecord) -> Tuple[Optional[str], Owne
     return name, kind
 
 
-def score_owners(evidence_records: List[EvidenceRecord]) -> List[OwnerCandidate]:
+def score_owners(evidence_records: list[EvidenceRecord]) -> list[OwnerCandidate]:
     """
     Scores and ranks potential owners from a list of evidence.
 
@@ -205,8 +204,8 @@ def score_owners(evidence_records: List[EvidenceRecord]) -> List[OwnerCandidate]
     lenient_mode = CONFIG.get("lenient_mode_enabled", False)
 
     # --- 1. Initial Entity Extraction & Alias Mapping ---
-    entities: Dict[str, OwnerCandidate] = {}
-    evidence_by_entity: Dict[str, List[EvidenceRecord]] = collections.defaultdict(list)
+    entities: dict[str, OwnerCandidate] = {}
+    evidence_by_entity: dict[str, list[EvidenceRecord]] = collections.defaultdict(list)
 
     # 1. First pass: extract all entities and map evidence
     for record in evidence_records:
@@ -257,7 +256,7 @@ def score_owners(evidence_records: List[EvidenceRecord]) -> List[OwnerCandidate]
     for norm_name, owner in entities.items():
         score = 0.0
         seen_rationale_keys = set()
-        contacts: Dict[Tuple[ContactType, str], Contact] = {}
+        contacts: dict[tuple[ContactType, str], Contact] = {}
 
         for record in evidence_by_entity[norm_name]:
             owner.evidence.append(record.id)

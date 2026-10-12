@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
 from urllib.parse import urlparse
 
 import httpx2
@@ -10,11 +9,11 @@ import httpx2
 from ..config import CONFIG
 from ..exceptions import NetworkError
 
-_client: Optional[httpx2.Client] = None
+_client: httpx2.Client | None = None
 logger = logging.getLogger(__name__)
 
 
-def normalize_url(url: str) -> Optional[str]:
+def normalize_url(url: str) -> str | None:
     """
     Cleans and normalizes a URL string for HTTP requests.
 
@@ -113,7 +112,7 @@ def make_request(url: str) -> httpx2.Response:
         ) from e
 
 
-def make_request_safe(url: str) -> Optional[httpx2.Response]:
+def make_request_safe(url: str) -> httpx2.Response | None:
     """
     Makes a GET request but returns the response even on HTTP error codes,
     or None if a connection-level error occurs.

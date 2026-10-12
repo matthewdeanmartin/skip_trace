@@ -9,10 +9,12 @@ import shutil
 import tarfile
 import zipfile
 from email.parser import Parser
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from ..analysis import url_scanner  # <-- IMPORT THE NEW URL SCANNER
-from ..analysis import source_scanner
+from ..analysis import (
+    source_scanner,
+    url_scanner,  # <-- IMPORT THE NEW URL SCANNER
+)
 from ..analysis.evidence import generate_evidence_id
 from ..exceptions import CollectorError, NetworkError
 from ..schemas import EvidenceKind, EvidenceRecord, EvidenceSource
@@ -31,12 +33,12 @@ def _create_evidence_from_contact(
     locator: str,
     confidence: float,
     notes_prefix: str,
-) -> List[EvidenceRecord]:
+) -> list[EvidenceRecord]:
     """Helper to create PERSON and EMAIL evidence from a 'Name <email>' string."""
     from ..analysis.evidence import _parse_contact_string
 
     evidence_list = []
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     parsed = _parse_contact_string(contact_str)
     name = parsed.get("name")
     email = parsed.get("email")
@@ -78,10 +80,10 @@ def _create_evidence_from_contact(
     return evidence_list
 
 
-def _parse_metadata_file(content: str, locator: str) -> List[EvidenceRecord]:
+def _parse_metadata_file(content: str, locator: str) -> list[EvidenceRecord]:
     """Parses a PKG-INFO or METADATA file for evidence."""
-    evidence_list: List[EvidenceRecord] = []
-    now = datetime.datetime.now(datetime.timezone.utc)
+    evidence_list: list[EvidenceRecord] = []
+    now = datetime.datetime.now(datetime.UTC)
     headers = Parser().parsestr(content)
 
     # Author/Maintainer information
@@ -154,7 +156,7 @@ def _ensure_download_dir():
             f.write("*\n")
 
 
-def _find_download_url(metadata: Dict[str, Any]) -> Optional[str]:
+def _find_download_url(metadata: dict[str, Any]) -> str | None:
     """Finds the best distribution URL from PyPI metadata."""
     urls = metadata.get("urls", [])
     if not urls:
@@ -187,8 +189,7 @@ def _download_file(url: str, download_dir: str) -> str | None:
             with http_client.get_client().stream("GET", url) as response:
                 response.raise_for_status()
                 with open(download_path, "wb") as f:
-                    for chunk in response.iter_bytes():
-                        f.write(chunk)
+                    f.writelines(response.iter_bytes())
         except (
             NetworkError,
             http_client.httpx2.RequestError,
@@ -203,7 +204,7 @@ def _download_file(url: str, download_dir: str) -> str | None:
     return download_path
 
 
-def collect_from_package_files(metadata: Dict[str, Any]) -> List[EvidenceRecord]:
+def collect_from_package_files(metadata: dict[str, Any]) -> list[EvidenceRecord]:
     """
     Downloads, extracts, and scans a package's files for evidence.
 
@@ -343,7 +344,7 @@ def collect_from_package_files(metadata: Dict[str, Any]) -> List[EvidenceRecord]
             logger.info(
                 f"Extracted {len(metadata_evidence)} evidence records from package metadata file."
             )
-        except IOError as e:
+        except OSError as e:
             logger.warning(f"Could not read metadata file {metadata_file_path}: {e}")
 
     return evidence

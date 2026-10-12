@@ -6,16 +6,17 @@ import dataclasses
 import json
 import logging
 import sys
-from typing import Set
 from urllib.parse import urlparse
 
 import tldextract
 from rich.logging import RichHandler
 
 from . import schemas
-from .analysis import backlinks  # Import the new module
+from .analysis import (
+    backlinks,  # Import the new module
+    scoring,
+)
 from .analysis import evidence as evidence_analyzer
-from .analysis import scoring
 from .collectors import (
     github,
     github_files,
@@ -107,8 +108,8 @@ def analyze_package(package: str, version: str | None = None) -> schemas.Package
         except CollectorError as e:
             logger.warning(f"Could not collect GitHub files for {url}: {e}")
 
-    domains_to_check: Set[str] = set()
-    urls_to_scan: Set[str] = set()
+    domains_to_check: set[str] = set()
+    urls_to_scan: set[str] = set()
     ignored_domains = set(CONFIG.get("whois_ignored_domains", []))
 
     for record in evidence_records:
@@ -161,7 +162,7 @@ def analyze_package(package: str, version: str | None = None) -> schemas.Package
     logger.info("Starting backlink analysis phase.")
     all_url_map = backlinks.gather_urls_from_evidence(evidence_records)
     pypi_project_url = f"https://pypi.org/project/{package_name}/"
-    trusted_anchor_urls: Set[str] = {pypi_project_url}
+    trusted_anchor_urls: set[str] = {pypi_project_url}
     candidate_urls = {
         url: record
         for url, record in all_url_map.items()

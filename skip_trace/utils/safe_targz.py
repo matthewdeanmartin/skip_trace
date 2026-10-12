@@ -3,10 +3,10 @@ from __future__ import annotations
 
 import os
 import tarfile
+from collections.abc import Iterable
 from pathlib import Path, PurePosixPath
 from posixpath import normpath as posix_normpath
 from tarfile import TarFile, TarInfo
-from typing import Iterable, List, Tuple
 
 
 class TarExtractionError(Exception):
@@ -49,7 +49,7 @@ def _is_bad_path(name: str) -> bool:
 
 def _iter_safe_members(
     tf: TarFile, dest: Path, allow_symlinks: bool
-) -> Iterable[Tuple[TarInfo, Path]]:
+) -> Iterable[tuple[TarInfo, Path]]:
     for m in tf.getmembers():
         clean = _sanitize_member_name(m.name)
         if _is_bad_path(clean):
@@ -59,9 +59,7 @@ def _iter_safe_members(
             continue
 
         # Directories and regular files are allowed
-        if m.isdir():
-            yield (m, out_path)
-        elif m.isreg():
+        if m.isdir() or m.isreg():
             yield (m, out_path)
         elif m.issym() or m.islnk():
             if not allow_symlinks:
@@ -95,8 +93,7 @@ def _extract_member(tf: TarFile, m: TarInfo, out_path: Path) -> None:
             raise TarExtractionError(f"Missing file data for {m.name!r}")
         with src, open(out_path, "wb") as f:
             # Stream copy without trusting metadata
-            for chunk in iter(lambda: src.read(1024 * 1024), b""):
-                f.write(chunk)
+            f.writelines(iter(lambda: src.read(1024 * 1024), b""))
         # Apply conservative mode for regular files (rw-r--r--)
         try:
             os.chmod(out_path, 0o644)
@@ -118,7 +115,7 @@ def _extract_member(tf: TarFile, m: TarInfo, out_path: Path) -> None:
 
 def safe_extract_tar(
     archive: Path, dest: Path, allow_symlinks: bool = False
-) -> List[Path]:
+) -> list[Path]:
     """
     Safely extract a tar archive into 'dest'.
     - Rejects absolute/parent-traversal paths and special members by default.
@@ -141,7 +138,7 @@ def safe_extract_tar(
     else:
         raise TarExtractionError(f"Unsupported tar archive: {archive.name}")
 
-    extracted: List[Path] = []
+    extracted: list[Path] = []
     with tarfile.open(archive, mode) as tf:  # type: ignore[call-overload]
         for m, out_path in _iter_safe_members(tf, dest, allow_symlinks=allow_symlinks):
             _extract_member(tf, m, out_path)
@@ -151,7 +148,7 @@ def safe_extract_tar(
 
 def safe_extract_auto(
     download_path: str, extract_dir: str, allow_symlinks: bool = False
-) -> List[Path]:
+) -> list[Path]:
     """
     Backwards-compatible replacement for:
         tarfile.open(...).extractall(extract_dir)

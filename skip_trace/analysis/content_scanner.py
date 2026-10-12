@@ -4,7 +4,6 @@ from __future__ import annotations
 import datetime
 import logging
 import re
-from typing import List
 
 from ..schemas import EvidenceKind, EvidenceRecord, EvidenceSource
 from ..utils.validation import is_valid_email
@@ -60,7 +59,7 @@ logger = logging.getLogger(__name__)
 
 def scan_text(
     content: str, locator: str, source: EvidenceSource, is_python_file: bool = False
-) -> List[EvidenceRecord]:
+) -> list[EvidenceRecord]:
     """
     Scans a string of text content for ownership evidence (excluding URLs).
 
@@ -74,8 +73,8 @@ def scan_text(
         A list of EvidenceRecord objects found in the text.
     """
     logger.info(f"Scanning {locator}")
-    evidence_list: List[EvidenceRecord] = []
-    now = datetime.datetime.now(datetime.timezone.utc)
+    evidence_list: list[EvidenceRecord] = []
+    now = datetime.datetime.now(datetime.UTC)
     found_in_scan = set()  # Avoid creating duplicate records from the same scan
 
     # 1. Scan for copyright notices

@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-from typing import List
 from urllib.parse import urlparse
 
 from sigstore.models import Bundle
@@ -41,7 +40,7 @@ def _parse_repo_from_github_uri(uri: str | None) -> str | None:
 
 def verify_and_collect(
     artifact_path: str, bundle_path: str, package_name: str, package_version: str
-) -> List[EvidenceRecord]:
+) -> list[EvidenceRecord]:
     """
     Verifies a package artifact against a Sigstore bundle and collects evidence.
 

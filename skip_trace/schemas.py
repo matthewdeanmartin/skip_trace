@@ -5,7 +5,7 @@ import datetime
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +103,7 @@ class EvidenceRecord:
     kind: EvidenceKind
     value: Any
     observed_at: datetime.datetime
-    linkage: List[str] = field(default_factory=list)
+    linkage: list[str] = field(default_factory=list)
     confidence: float = 0.0
     notes: str = ""
 
@@ -125,8 +125,8 @@ class OwnerCandidate:
     name: str
     kind: OwnerKind
     score: float = 0.0
-    contacts: List[Contact] = field(default_factory=list)
-    evidence: List[str] = field(default_factory=list)  # List of EvidenceRecord IDs
+    contacts: list[Contact] = field(default_factory=list)
+    evidence: list[str] = field(default_factory=list)  # List of EvidenceRecord IDs
     rationale: str = ""
 
 
@@ -135,7 +135,7 @@ class Maintainer:
     """A simplified maintainer record, distinct from a scored owner."""
 
     name: str
-    email: Optional[str] = None
+    email: str | None = None
     confidence: float = 0.0
 
 
@@ -144,11 +144,11 @@ class PackageResult:
     """The final JSON output for a single package."""
 
     package: str
-    version: Optional[str] = None
-    owners: List[OwnerCandidate] = field(default_factory=list)
-    maintainers: List[Maintainer] = field(default_factory=list)
-    evidence: List[EvidenceRecord] = field(default_factory=list)
+    version: str | None = None
+    owners: list[OwnerCandidate] = field(default_factory=list)
+    maintainers: list[Maintainer] = field(default_factory=list)
+    evidence: list[EvidenceRecord] = field(default_factory=list)
     timestamp: str = field(
-        default_factory=lambda: datetime.datetime.now(datetime.timezone.utc).isoformat()
+        default_factory=lambda: datetime.datetime.now(datetime.UTC).isoformat()
     )
     schema_version: str = "1.0"

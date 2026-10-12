@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, Optional, cast
+from typing import Any, cast
 
 # Use tomllib if available (Python 3.11+), otherwise fall back to tomli
 try:
@@ -17,7 +17,7 @@ from .exceptions import ConfigurationError
 # Load .env file at module level
 load_dotenv()
 
-DEFAULT_CONFIG: Dict[str, Any] = {
+DEFAULT_CONFIG: dict[str, Any] = {
     "default_min_score": 0.70,
     "default_fail_under": 0.50,
     "entity_resolution_llm": False,
@@ -108,7 +108,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
 }
 
 
-def find_pyproject_toml(start_dir: str = ".") -> Optional[str]:
+def find_pyproject_toml(start_dir: str = ".") -> str | None:
     """Finds pyproject.toml by searching upwards from start_dir."""
     path = os.path.abspath(start_dir)
     while True:
@@ -121,7 +121,7 @@ def find_pyproject_toml(start_dir: str = ".") -> Optional[str]:
         path = parent
 
 
-def load_config(test_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def load_config(test_config: dict[str, Any] | None = None) -> dict[str, Any]:
     """
     Loads configuration, allowing for test overrides.
 
@@ -177,7 +177,7 @@ def load_config(test_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         os.getenv("SKIP_TRACE_INCLUDE_TOOL_ORGS") is not None
     )
 
-    return cast(Dict[str, Any], config)
+    return cast(dict[str, Any], config)
 
 
 # Load once at module level to be imported by other parts of the app

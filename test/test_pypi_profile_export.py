@@ -15,7 +15,7 @@ from skip_trace.schemas import (
 
 
 def test_build_exchange_collects_identity_details() -> None:
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     result = PackageResult(
         package="demo-package",
         version="1.2.3",

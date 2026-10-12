@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
 
@@ -56,9 +56,7 @@ class ExportGenerator(BaseModel):
 
 class PypiProfileExchange(BaseModel):
     schema_version: str = "1.0"
-    generated_at: str = Field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
-    )
+    generated_at: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
     generator: ExportGenerator = Field(default_factory=ExportGenerator)
     source_package: ExportPackageEntry
     subject: ExportSubject

@@ -6,7 +6,6 @@ import logging
 import os
 import re
 import string
-from typing import List
 
 from ..schemas import EvidenceKind, EvidenceRecord, EvidenceSource
 from ..utils.validation import is_valid_email
@@ -108,7 +107,7 @@ def _is_binary_file(filepath: str, chunk_size: int = 1024) -> bool:
     try:
         with open(filepath, "rb") as f:
             chunk = f.read(chunk_size)
-    except IOError:
+    except OSError:
         return True  # Cannot read, so skip it.
 
     if not chunk:
@@ -130,7 +129,7 @@ def _is_binary_file(filepath: str, chunk_size: int = 1024) -> bool:
 
 def _process_authors_file(
     content: str, locator: str, now: datetime.datetime
-) -> List[EvidenceRecord]:
+) -> list[EvidenceRecord]:
     """Processes an AUTHORS file, treating each non-blank line as a potential author."""
     evidence_list = []
     logger.debug(f"Processing AUTHORS file at: {locator}")
@@ -227,7 +226,7 @@ skip_extensions = {
 }
 
 
-def scan_directory(directory_path: str, locator_prefix: str) -> List[EvidenceRecord]:
+def scan_directory(directory_path: str, locator_prefix: str) -> list[EvidenceRecord]:
     """
     Scans a directory of files for ownership evidence.
 
@@ -238,8 +237,8 @@ def scan_directory(directory_path: str, locator_prefix: str) -> List[EvidenceRec
     Returns:
         A list of EvidenceRecord objects found in the files.
     """
-    evidence_list: List[EvidenceRecord] = []
-    now = datetime.datetime.now(datetime.timezone.utc)
+    evidence_list: list[EvidenceRecord] = []
+    now = datetime.datetime.now(datetime.UTC)
 
     file_count = 0
     for root, dirs, files in os.walk(directory_path):
@@ -404,7 +403,7 @@ def scan_directory(directory_path: str, locator_prefix: str) -> List[EvidenceRec
                         if not already_in:
                             evidence_list.append(record)
 
-            except (IOError, UnicodeDecodeError) as e:
+            except (OSError, UnicodeDecodeError) as e:
                 logger.debug(f"Could not read or process file {file_path}: {e}")
                 continue
 

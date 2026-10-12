@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import datetime
 import logging
-from typing import Dict, List, Set  # <--- Add Dict
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
@@ -17,8 +16,8 @@ logger = logging.getLogger(__name__)
 
 
 def gather_urls_from_evidence(
-    evidence_records: List[EvidenceRecord],
-) -> Dict[str, EvidenceRecord]:  # <--- Changed return type
+    evidence_records: list[EvidenceRecord],
+) -> dict[str, EvidenceRecord]:  # <--- Changed return type
     """
     Gathers all unique URLs from evidence, mapping them to their source record.
 
@@ -28,7 +27,7 @@ def gather_urls_from_evidence(
     Returns:
         A dictionary mapping a unique URL to its original EvidenceRecord.
     """
-    urls: Dict[str, EvidenceRecord] = {}  # <--- Changed to a Dict
+    urls: dict[str, EvidenceRecord] = {}  # <--- Changed to a Dict
 
     for record in evidence_records:
         if isinstance(record.value, dict):
@@ -66,8 +65,8 @@ def classify_domain(domain: str) -> str:
 
 
 def analyze_backlinks(
-    candidate_url_map: Dict[str, EvidenceRecord], trusted_anchor_urls: Set[str]
-) -> List[EvidenceRecord]:
+    candidate_url_map: dict[str, EvidenceRecord], trusted_anchor_urls: set[str]
+) -> list[EvidenceRecord]:
     """
     Verifies candidate URLs by checking if they link back to a trusted anchor URL.
 
@@ -78,8 +77,8 @@ def analyze_backlinks(
     Returns:
         A list of new EvidenceRecord objects for each verified backlink.
     """
-    evidence: List[EvidenceRecord] = []
-    now = datetime.datetime.now(datetime.timezone.utc)
+    evidence: list[EvidenceRecord] = []
+    now = datetime.datetime.now(datetime.UTC)
     # seen_links: Set[Tuple[str, str]] = set()
     # urls = url_evidence_map.keys() # <--- Get URLs from the map keys
 
