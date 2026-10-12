@@ -5,12 +5,12 @@ import logging
 from typing import Optional
 from urllib.parse import urlparse
 
-import httpx
+import httpx2
 
 from ..config import CONFIG
 from ..exceptions import NetworkError
 
-_client: Optional[httpx.Client] = None
+_client: Optional[httpx2.Client] = None
 logger = logging.getLogger(__name__)
 
 
@@ -49,12 +49,12 @@ def normalize_url(url: str) -> Optional[str]:
     return cleaned_url
 
 
-def get_client() -> httpx.Client:
-    """Returns a shared httpx.Client instance."""
+def get_client() -> httpx2.Client:
+    """Returns a shared httpx2.Client instance."""
     global _client
     if _client is None:
         http_config = CONFIG.get("http", {})
-        _client = httpx.Client(
+        _client = httpx2.Client(
             headers={"User-Agent": http_config.get("user_agent", "skip-trace")},
             timeout=http_config.get("timeout", 5),
             follow_redirects=True,
@@ -62,12 +62,12 @@ def get_client() -> httpx.Client:
     return _client
 
 
-def _attempt_request(client: httpx.Client, url: str) -> httpx.Response:
+def _attempt_request(client: httpx2.Client, url: str) -> httpx2.Response:
     """Internal helper to attempt requests with https->http fallback on connection errors."""
     try:
         # First, try the URL as is (which will be https by default from normalize)
         return client.get(url)
-    except httpx.ConnectError as e:
+    except httpx2.ConnectError as e:
         # If it was an https URL that failed to connect, try http
         if url.startswith("https://"):
             http_url = url.replace("https://", "http://", 1)
@@ -77,7 +77,7 @@ def _attempt_request(client: httpx.Client, url: str) -> httpx.Response:
             try:
                 # Second attempt with http
                 return client.get(http_url)
-            except httpx.RequestError as http_e:
+            except httpx2.RequestError as http_e:
                 # If the http fallback also fails, raise the original error for context
                 raise NetworkError(
                     f"Network request to {http_e.request.url} failed after fallback: {http_e}"
@@ -86,14 +86,14 @@ def _attempt_request(client: httpx.Client, url: str) -> httpx.Response:
         raise NetworkError(f"Network request to {e.request.url} failed: {e}") from e
 
 
-def make_request(url: str) -> httpx.Response:
+def make_request(url: str) -> httpx2.Response:
     """
     Makes a GET request using the shared client and handles common errors.
     Automatically attempts https and falls back to http on connection failure.
 
     :param url: The URL to fetch.
     :raises NetworkError: If the request fails due to network issues or an error status code.
-    :return: The httpx.Response object.
+    :return: The httpx2.Response object.
     """
     clean_url = normalize_url(url)
     if not clean_url:
@@ -105,15 +105,15 @@ def make_request(url: str) -> httpx.Response:
         response = _attempt_request(client, clean_url)
         response.raise_for_status()
         return response
-    except httpx.RequestError as e:
+    except httpx2.RequestError as e:
         raise NetworkError(f"Network request to {e.request.url} failed: {e}") from e
-    except httpx.HTTPStatusError as e:
+    except httpx2.HTTPStatusError as e:
         raise NetworkError(
             f"Request to {e.request.url} failed with status {e.response.status_code}"
         ) from e
 
 
-def make_request_safe(url: str) -> Optional[httpx.Response]:
+def make_request_safe(url: str) -> Optional[httpx2.Response]:
     """
     Makes a GET request but returns the response even on HTTP error codes,
     or None if a connection-level error occurs.

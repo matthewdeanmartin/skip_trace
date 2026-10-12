@@ -2,12 +2,16 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
-import spacy
-from spacy.language import Language
+try:
+    import spacy
+    from spacy.language import Language
+except ImportError:
+    spacy = None
+    Language = Any
 
-SPACY_AVAILABLE = True
+SPACY_AVAILABLE = spacy is not None
 
 
 logger = logging.getLogger(__name__)

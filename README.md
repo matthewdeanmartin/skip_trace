@@ -154,3 +154,16 @@ Nothing I could find.
 - [PyPI](https://pypi.org/project/skip-trace/)
 - [Bug Tracker](https://github.com/matthewdeanmartin/skip_trace/issues)
 - [Change Log](https://github.com/matthewdeanmartin/skip_trace/blob/main/CHANGELOG.md)
+
+## Python 3.15 and optional NLP
+
+On Python 3.15 and later the base install omits spaCy and its English model. Ownership scanning retains its other heuristics when spaCy is absent, but named-entity extraction returns no results, reducing person/organization attribution accuracy. The `nlp` extra permits explicit opt-in when compatible wheels are available.
+
+Windows 3.15.0rc3 remains blocked by mandatory PyYAML wheel availability, even with dependency prereleases allowed. This is not full 3.15 support. The no-spaCy fallback is covered by the 3.14 test suite. Require wheels for dependency installs; do not compile missing native dependencies.
+
+
+## HTTPX2 verification (2026-10-04)
+
+Direct HTTP/2 clients now use HTTPX2. Python 3.14.7 passes 7 tests / 1 skip with the project-configured published spaCy model wheel URL; installed-wheel startup works. Bare PyPI resolution cannot find en-core-web-sm. RC3 stable/pre remains PyYAML-wheel-blocked. Third-party SDK dependencies can still require HTTPX.
+
+Dependency installs require published wheels; no native builds or GitHub jobs. Experimental mode allows prereleases but the successful HTTPX2 test environments selected stable packages. Locks were upgraded with `uv lock --upgrade`. Changes are local; human operators decide publishing and upstream reports.

@@ -191,8 +191,8 @@ def _download_file(url: str, download_dir: str) -> str | None:
                         f.write(chunk)
         except (
             NetworkError,
-            http_client.httpx.RequestError,
-            http_client.httpx.HTTPStatusError,
+            http_client.httpx2.RequestError,
+            http_client.httpx2.HTTPStatusError,
         ) as e:
             # A 404 is expected for bundles, so we don't raise a CollectorError
             if response and response.status_code == 404:

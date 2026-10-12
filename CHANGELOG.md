@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PyPI profile export module with `build_exchange` helper
 
 ### Changed
+
+- Replace direct HTTPX clients with HTTPX2; HTTPS now uses the operating system trust store.
 - Refactor `run_who_owns` into a reusable `analyze_package` function
 
 ## [0.1.1] - 2025-10-12
