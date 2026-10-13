@@ -217,8 +217,3 @@ __marimo__/
 /.idea/skip_trace.iml
 /.idea/vcs.xml
 /SOURCE.md
-
-# make stamp files (touched by Makefile targets)
-/bandit
-/pre
-/pylint

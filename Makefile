@@ -15,6 +15,10 @@ uv.lock: pyproject.toml
 
 # tests can't be expected to pass if dependencies aren't installed.
 # tests are often slow and linting is fast, so run tests on linted code.
+# None of these produce a file named after the target (and test/ is a real directory),
+# so they must always run.
+.PHONY: test isort jiggle_version black pre-commit bandit check check_docs make_docs check_md check_spelling check_changelog check_all_docs check_self
+
 test: uv.lock
 	@echo "Running unit tests"
 	# $(VENV) pytest --doctest-modules skip_trace
@@ -49,20 +53,17 @@ black:  isort jiggle_version
 pre-commit:  isort black
 	@echo "Pre-commit checks"
 	$(VENV) pre-commit run --all-files
-	@touch pre-commit
 
 
 bandit:  
 	@echo "Security checks"
 	$(VENV)  bandit skip_trace -r --quiet
-	@touch bandit
 
 .PHONY: pylint
 pylint:  isort black 
 	@echo "Linting with pylint"
 	$(VENV) ruff check --fix
 	$(VENV) pylint skip_trace --fail-under 9.8
-	@touch pylint
 
 check: mypy test pylint bandit
 
