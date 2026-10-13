@@ -11,8 +11,10 @@ import zipfile
 from email.parser import Parser
 from typing import Any
 
-from ..analysis import url_scanner  # <-- IMPORT THE NEW URL SCANNER
-from ..analysis import source_scanner
+from ..analysis import (
+    source_scanner,
+    url_scanner,  # <-- IMPORT THE NEW URL SCANNER
+)
 from ..analysis.evidence import generate_evidence_id
 from ..exceptions import CollectorError, NetworkError
 from ..schemas import EvidenceKind, EvidenceRecord, EvidenceSource

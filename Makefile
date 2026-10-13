@@ -60,7 +60,7 @@ bandit:
 .PHONY: pylint
 pylint:  isort black 
 	@echo "Linting with pylint"
-	$(VENV) ruff --fix
+	$(VENV) ruff check --fix
 	$(VENV) pylint skip_trace --fail-under 9.8
 	@touch pylint
 
