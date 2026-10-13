@@ -62,7 +62,7 @@ bandit:
 .PHONY: pylint
 pylint:  isort black 
 	@echo "Linting with pylint"
-	$(VENV) ruff check --fix
+	$(VENV) ruff check --fix skip_trace
 	$(VENV) pylint skip_trace --fail-under 9.8
 
 check: mypy test pylint bandit
