@@ -8,8 +8,8 @@ try:
     import spacy
     from spacy.language import Language
 except ImportError:
-    spacy = None
-    Language = Any
+    spacy = None  # type: ignore[assignment]
+    Language = Any  # type: ignore[misc,assignment]
 
 SPACY_AVAILABLE = spacy is not None
 

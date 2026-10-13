@@ -19,7 +19,7 @@ def _parse_san_from_cert(bundle: Bundle) -> str | None:
         sans = bundle.signing_certificate.subject  # no alt name?
         for san in sans:
             # The value attribute of the GeneralName object holds the identity.
-            return san.value
+            return str(san.value)
     except Exception:
         return None
     return None

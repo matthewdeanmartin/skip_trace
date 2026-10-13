@@ -12,11 +12,9 @@ import tldextract
 from rich.logging import RichHandler
 
 from . import schemas
-from .analysis import (
-    backlinks,  # Import the new module
-    scoring,
-)
+from .analysis import backlinks  # Import the new module
 from .analysis import evidence as evidence_analyzer
+from .analysis import scoring
 from .collectors import (
     github,
     github_files,

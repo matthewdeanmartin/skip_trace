@@ -314,7 +314,7 @@ def extract_from_pypi(
             soup = BeautifulSoup(description, "html.parser")
             first_link = soup.find("a", href=True)
             if first_link and first_link["href"]:
-                url = first_link["href"]
+                url = str(first_link["href"])
                 value = {"label": "Link from Description", "url": url}
                 record = EvidenceRecord(
                     id=generate_evidence_id(
