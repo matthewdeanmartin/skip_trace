@@ -218,10 +218,7 @@ __marimo__/
 /.idea/vcs.xml
 /SOURCE.md
 
-# make stamp files
+# make stamp files (touched by Makefile targets)
 /bandit
+/pre
 /pylint
-/isort
-/black
-/mypy
-/test
